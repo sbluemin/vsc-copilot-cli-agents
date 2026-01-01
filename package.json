@@ -1,0 +1,57 @@
+{
+  "name": "copilot-cli-agents",
+  "displayName": "Copilot CLI Agents",
+  "description": "Copilot extension for integrating multiple Code Agent CLIs",
+  "version": "0.0.1",
+  "publisher": "sbluemin",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sbluemin/copilot-cli-agents"
+  },
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "categories": [
+    "AI",
+    "Chat"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "copilot-cli-agents.gemini",
+        "fullName": "Gemini",
+        "name": "gemini",
+        "description": "Google Gemini AI Assistant",
+        "isSticky": true
+      },
+      {
+        "id": "copilot-cli-agents.claude",
+        "fullName": "Claude",
+        "name": "claude",
+        "description": "Anthropic Claude AI Assistant",
+        "isSticky": true
+      }
+    ],
+    "commands": [
+      {
+        "command": "copilot-cli-agents.helloWorld",
+        "title": "Hello World"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "mkdir -p package && vsce package --out package/",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "22.x",
+    "@types/vscode": "^1.107.0",
+    "typescript": "^5.9.3",
+    "@vscode/vsce": "^2.12.0"
+  }
+}

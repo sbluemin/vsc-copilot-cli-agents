@@ -1,0 +1,25 @@
+{
+  // IntelliSense를 사용하여 가능한 특성에 대해 알아보세요.
+  // 기존 특성에 대한 설명을 보려면 마우스 커서를 올려보세요.
+  // https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "resolveSourceMapLocations": [
+          "${workspaceFolder}/**",
+          "!**/node_modules/**"
+      ],
+      "sourceMaps": true,
+      "preLaunchTask": "${defaultBuildTask}"
+    }
+  ]
+}

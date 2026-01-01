@@ -1,0 +1,33 @@
+# VS Code Extension Development Guidelines
+
+## Project Structure
+
+```
+copilot-cli-agents/
+├── .vscode/           # VS Code configuration files
+│   ├── launch.json    # Debug configuration
+│   ├── tasks.json     # Build task configuration
+│   └── settings.json  # Workspace settings
+├── src/
+│   ├── extension.ts   # Extension entry point
+│   └── test/          # Test files
+├── dist/              # Compiled output (esbuild)
+├── package.json       # Extension manifest
+├── tsconfig.json      # TypeScript configuration
+└── esbuild.js         # Bundler configuration
+```
+
+## Key Commands
+
+- `npm run compile` - Build the project
+- `npm run watch` - Build in watch mode
+- `npm run lint` - Run ESLint
+- `npm run test` - Run tests
+- `vsce package` - Create .vsix file
+- `vsce publish` - Publish to Marketplace
+
+## References
+
+- [VS Code Extension API](https://code.visualstudio.com/api)
+- [Extension Guides](https://code.visualstudio.com/api/extension-guides/overview)
+- [Chat Participant API](https://code.visualstudio.com/api/extension-guides/ai/chat)
