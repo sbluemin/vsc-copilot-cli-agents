@@ -9,6 +9,16 @@ import { spawn, ChildProcess } from 'child_process';
 import { CliOptions, CliResult, StreamCallback, StreamContent, CliRunner } from '../types';
 
 /**
+ * 스트리밍 파싱 결과 (세션 ID 포함)
+ */
+export interface ParseResult {
+  /** 스트리밍 콘텐츠 */
+  content: StreamContent | null;
+  /** 추출된 세션 ID (있는 경우) */
+  sessionId?: string;
+}
+
+/**
  * Spawn 기반 CLI Runner 추상 클래스
  */
 export abstract class SpawnCliRunner implements CliRunner {
@@ -16,9 +26,10 @@ export abstract class SpawnCliRunner implements CliRunner {
 
   /**
    * CLI 실행 옵션 빌드
+   * @param resumeSessionId - 재개할 세션 ID (선택적)
    * @returns CLI 명령어와 추가 인자
    */
-  protected abstract buildCliOptions(): { command: string; args: string[] };
+  protected abstract buildCliOptions(resumeSessionId?: string): { command: string; args: string[] };
 
   /**
    * 프롬프트 인자 빌드
@@ -28,11 +39,11 @@ export abstract class SpawnCliRunner implements CliRunner {
   protected abstract buildPromptArgument(prompt: string): string[];
 
   /**
-   * 스트리밍 라인 파싱
+   * 스트리밍 라인 파싱 (세션 ID 추출 포함)
    * @param line - JSON 라인
-   * @returns 추출된 콘텐츠 또는 null
+   * @returns 파싱 결과 (콘텐츠 및 세션 ID)
    */
-  protected abstract parseLine(line: string): StreamContent | null;
+  protected abstract parseLineWithSession(line: string): ParseResult;
 
   /**
    * ANSI escape 코드 제거
@@ -48,6 +59,7 @@ export abstract class SpawnCliRunner implements CliRunner {
     chunk: Buffer,
     buffer: { value: string },
     fullContent: { value: string },
+    extractedSessionId: { value?: string },
     onContent: StreamCallback
   ): void {
     buffer.value += chunk.toString();
@@ -61,12 +73,18 @@ export abstract class SpawnCliRunner implements CliRunner {
         continue;
       }
 
-      const result = this.parseLine(cleanLine);
-      if (result) {
-        if (result.type === 'text') {
-          fullContent.value += result.content;
+      const parseResult = this.parseLineWithSession(cleanLine);
+
+      // 세션 ID 추출
+      if (parseResult.sessionId && !extractedSessionId.value) {
+        extractedSessionId.value = parseResult.sessionId;
+      }
+
+      if (parseResult.content) {
+        if (parseResult.content.type === 'text') {
+          fullContent.value += parseResult.content.content;
         }
-        onContent(result);
+        onContent(parseResult.content);
       }
     }
   }
@@ -75,8 +93,8 @@ export abstract class SpawnCliRunner implements CliRunner {
    * CLI 실행 (스트리밍)
    */
   async run(options: CliOptions, onContent: StreamCallback): Promise<CliResult> {
-    const { prompt, cwd, abortSignal } = options;
-    const { command, args } = this.buildCliOptions();
+    const { prompt, cwd, abortSignal, resumeSessionId } = options;
+    const { command, args } = this.buildCliOptions(resumeSessionId);
     const promptArgs = this.buildPromptArgument(prompt);
 
     // 전체 인자 조합: promptArgs + args
@@ -85,6 +103,7 @@ export abstract class SpawnCliRunner implements CliRunner {
     return new Promise((resolve) => {
       const fullContent = { value: '' };
       const buffer = { value: '' };
+      const extractedSessionId: { value?: string } = {};
 
       // shell: true로 실행하면 크로스 플랫폼에서 동작
       // Windows: .cmd, .bat 래퍼 자동 인식
@@ -106,12 +125,12 @@ export abstract class SpawnCliRunner implements CliRunner {
 
       // stdout 스트리밍 처리
       childProcess.stdout?.on('data', (chunk: Buffer) => {
-        this.processChunk(chunk, buffer, fullContent, onContent);
+        this.processChunk(chunk, buffer, fullContent, extractedSessionId, onContent);
       });
 
       // stderr도 함께 처리 (일부 CLI는 stderr로 출력)
       childProcess.stderr?.on('data', (chunk: Buffer) => {
-        this.processChunk(chunk, buffer, fullContent, onContent);
+        this.processChunk(chunk, buffer, fullContent, extractedSessionId, onContent);
       });
 
       childProcess.on('close', (exitCode) => {
@@ -123,12 +142,18 @@ export abstract class SpawnCliRunner implements CliRunner {
         // 남은 버퍼 처리
         if (buffer.value.trim()) {
           const cleanLine = this.cleanAnsi(buffer.value).trim();
-          const result = this.parseLine(cleanLine);
-          if (result) {
-            if (result.type === 'text') {
-              fullContent.value += result.content;
+          const parseResult = this.parseLineWithSession(cleanLine);
+
+          // 세션 ID 추출
+          if (parseResult.sessionId && !extractedSessionId.value) {
+            extractedSessionId.value = parseResult.sessionId;
+          }
+
+          if (parseResult.content) {
+            if (parseResult.content.type === 'text') {
+              fullContent.value += parseResult.content.content;
             }
-            onContent(result);
+            onContent(parseResult.content);
           }
         }
 
@@ -136,12 +161,14 @@ export abstract class SpawnCliRunner implements CliRunner {
           resolve({
             success: true,
             content: fullContent.value,
+            sessionId: extractedSessionId.value,
           });
         } else {
           resolve({
             success: false,
             content: fullContent.value,
             error: `Process exited with code ${exitCode}`,
+            sessionId: extractedSessionId.value,
           });
         }
       });
@@ -156,6 +183,7 @@ export abstract class SpawnCliRunner implements CliRunner {
           success: false,
           content: fullContent.value,
           error: err.message,
+          sessionId: extractedSessionId.value,
         });
       });
     });

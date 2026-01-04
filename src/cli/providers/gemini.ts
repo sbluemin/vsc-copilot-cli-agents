@@ -2,16 +2,23 @@
  * Gemini CLI Provider
  */
 
-import { SpawnCliRunner } from '../runners';
+import { SpawnCliRunner, ParseResult } from '../runners';
 import { GeminiStreamMessage, StreamContent } from '../types';
 
 export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
 
-  protected buildCliOptions(): { command: string; args: string[] } {
+  protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
+    const args = ['--allowed-tools', 'google_web_search', '--output-format', 'stream-json'];
+
+    // 세션 재개 옵션 추가
+    if (resumeSessionId) {
+      args.push('--resume', resumeSessionId);
+    }
+
     return {
       command: 'gemini',
-      args: ['--allowed-tools', 'google_web_search', '--output-format', 'stream-json'],
+      args,
     };
   }
 
@@ -20,13 +27,14 @@ export class GeminiCliRunner extends SpawnCliRunner {
     return [prompt];
   }
 
-  protected parseLine(line: string): StreamContent | null {
+  protected parseLineWithSession(line: string): ParseResult {
     try {
       const message = JSON.parse(line) as GeminiStreamMessage;
+      let content: StreamContent | null = null;
 
       // tool_use 타입 처리
       if (message.type === 'tool_use') {
-        return {
+        content = {
           type: 'tool_use',
           content: message.tool_name || 'tool',
           toolName: message.tool_name,
@@ -34,8 +42,8 @@ export class GeminiCliRunner extends SpawnCliRunner {
       }
 
       // tool_result 타입 처리
-      if (message.type === 'tool_result') {
-        return {
+      else if (message.type === 'tool_result') {
+        content = {
           type: 'tool_result',
           content: message.output || '',
           toolName: message.tool_name,
@@ -43,17 +51,20 @@ export class GeminiCliRunner extends SpawnCliRunner {
       }
 
       // assistant 메시지의 content만 추출
-      if (message.type === 'message' && message.role === 'assistant' && message.content) {
-        return {
+      else if (message.type === 'message' && message.role === 'assistant' && message.content) {
+        content = {
           type: 'text',
           content: message.content,
         };
       }
 
-      return null;
+      return {
+        content,
+        sessionId: message.session_id,
+      };
     } catch {
       // JSON 파싱 실패 시 무시
-      return null;
+      return { content: null };
     }
   }
 }

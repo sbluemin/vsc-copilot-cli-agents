@@ -122,13 +122,66 @@ echo "프롬프트" | gemini
 cat file.txt | gemini "이 내용을 요약해줘"
 ```
 
+## 세션 관리
+
+Gemini CLI는 대화 세션을 저장하고 재개할 수 있는 기능을 제공합니다.
+
+### 세션 관련 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `-r, --resume <session>` | 이전 세션 복원 (`latest`, 인덱스 번호, 또는 세션 UUID) |
+| `--list-sessions` | 현재 프로젝트의 사용 가능한 세션 목록 표시 |
+| `--delete-session <index>` | 인덱스 번호로 세션 삭제 |
+
+### 세션 목록 확인
+
+```bash
+# 현재 프로젝트의 세션 목록 보기
+gemini --list-sessions
+
+# 출력 예시:
+# Available sessions for this project (1):
+#   1. What is 2+2 (Just now) [ec0182e8-e3b1-402b-b658-81220200c942]
+```
+
+### 세션 재개 (Resume)
+
+```bash
+# 가장 최근 세션 재개
+gemini "후속 질문" -r latest -o json
+
+# 인덱스 번호로 재개 (--list-sessions에서 확인)
+gemini "후속 질문" -r 1 -o json
+
+# 세션 UUID로 재개
+gemini "후속 질문" -r "ec0182e8-e3b1-402b-b658-81220200c942" -o json
+```
+
+### Chat Participant에서의 세션 활용 예시
+
+```bash
+# 1. 첫 호출 - 응답에서 session_id 저장
+gemini "프로젝트 분석해줘" -o json
+# 응답: {"session_id": "ec0182e8-...", ...}
+
+# 2. 후속 호출 - 저장된 session_id로 대화 이어가기
+gemini "이전 분석 결과를 바탕으로 리팩토링 제안해줘" -r "ec0182e8-..." -o json
+```
+
+### 세션 삭제
+
+```bash
+# 인덱스 번호로 세션 삭제
+gemini --delete-session 1
+```
+
 ## 추가 옵션
 
 | 옵션 | 설명 |
 |------|------|
 | `-i, --prompt-interactive` | 프롬프트 실행 후 대화형 모드 진입 |
 | `-s, --sandbox` | 샌드박스 모드 실행 |
-| `-r, --resume <session>` | 이전 세션 복원 (`latest` 또는 인덱스 번호) |
 | `--allowed-tools <tools>` | 확인 없이 실행 허용할 도구 목록 |
 | `-e, --extensions <list>` | 사용할 확장 목록 |
 | `--include-directories <dirs>` | 워크스페이스에 포함할 추가 디렉토리 |

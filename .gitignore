@@ -3,3 +3,6 @@ dist
 node_modules
 .vscode-test/
 *.vsix
+
+# 세션 매핑 파일 (로컬 상태)
+.github/copilot-cli-agents.json

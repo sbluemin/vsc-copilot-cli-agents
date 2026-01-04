@@ -12,6 +12,8 @@ export interface CliOptions {
   cwd?: string;
   /** 취소 토큰 */
   abortSignal?: AbortSignal;
+  /** 재개할 CLI 세션 ID (resume 용도) */
+  resumeSessionId?: string;
 }
 
 /**
@@ -47,6 +49,8 @@ export interface CliResult {
   content: string;
   /** 에러 메시지 (실패 시) */
   error?: string;
+  /** CLI 세션 ID (세션 재활용 용도) */
+  sessionId?: string;
 }
 
 /**

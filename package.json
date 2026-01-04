@@ -1,12 +1,13 @@
 {
   "name": "copilot-cli-agents",
-  "displayName": "Copilot CLI Agents",
-  "description": "Copilot extension for integrating multiple Code Agent CLIs",
+  "displayName": "Github Copilot CLI Agents",
+  "description": "Github Copilot extension for integrating multiple Code Agent CLIs",
   "version": "0.0.1",
   "publisher": "sbluemin",
+  "icon": "assets/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sbluemin/copilot-cli-agents"
+    "url": "https://github.com/sbluemin/vsc-copilot-cli-agents"
   },
   "engines": {
     "vscode": "^1.107.0"
@@ -33,19 +34,13 @@
         "description": "Anthropic Claude AI Assistant",
         "isSticky": true
       }
-    ],
-    "commands": [
-      {
-        "command": "copilot-cli-agents.helloWorld",
-        "title": "Hello World"
-      }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "mkdir -p package && vsce package --out package/",
+    "package": "mkdir -p out && vsce package --out out/",
     "publish": "vsce publish"
   },
   "devDependencies": {

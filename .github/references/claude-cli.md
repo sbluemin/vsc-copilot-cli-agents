@@ -183,16 +183,68 @@ claude -p "프롬프트" --tools ""
 claude -p "프롬프트" --permission-mode acceptEdits
 ```
 
-## 추가 옵션
+## 세션 관리
+
+Claude CLI는 대화 세션을 저장하고 재개할 수 있는 기능을 제공합니다.
+
+### 세션 관련 옵션
 
 | 옵션 | 설명 |
 |------|------|
 | `-c, --continue` | 가장 최근 대화 계속 |
-| `-r, --resume [id]` | 세션 ID로 대화 재개 |
+| `-r, --resume <session-id>` | 세션 UUID로 대화 재개 |
+| `--session-id <uuid>` | 새 대화에 특정 UUID 지정 (유효한 UUID 형식 필수) |
+| `--fork-session` | 세션 재개 시 원본 유지하고 새 세션 ID로 분기 (`--resume` 또는 `--continue`와 함께 사용) |
+| `--no-session-persistence` | 세션 저장 비활성화 (`--print`와 함께 사용) |
+
+### 세션 재개 (Resume)
+
+```bash
+# 가장 최근 대화 이어가기
+claude -p "후속 질문" --continue --output-format json
+
+# 특정 세션 UUID로 재개
+claude -p "후속 질문" --resume "59c75877-fa8e-4326-9979-d320504d44ff" --output-format json
+```
+
+### 세션 ID 명시적 지정
+
+```bash
+# 새 세션에 특정 UUID 지정
+claude -p "질문" --session-id "11111111-2222-3333-4444-555555555555" --output-format json
+
+# 이후 해당 세션 재개
+claude -p "후속 질문" --resume "11111111-2222-3333-4444-555555555555" --output-format json
+```
+
+### 세션 분기 (Fork)
+
+```bash
+# 기존 세션의 대화 내용을 유지하면서 새 세션 ID로 분기
+claude -p "다른 방향의 질문" --resume "59c75877-fa8e-4326-9979-d320504d44ff" --fork-session --output-format json
+
+# 최근 대화에서 분기
+claude -p "다른 접근 시도" --continue --fork-session --output-format json
+```
+
+### Chat Participant에서의 세션 활용 예시
+
+```bash
+# 1. 첫 호출 - 응답에서 session_id 저장
+claude -p "프로젝트 분석해줘" --output-format json
+# 응답: {"session_id": "abc-123-...", ...}
+
+# 2. 후속 호출 - 저장된 session_id로 대화 이어가기
+claude -p "이전 분석 결과를 바탕으로 리팩토링 제안해줘" --resume "abc-123-..." --output-format json
+```
+
+## 추가 옵션
+
+| 옵션 | 설명 |
+|------|------|
 | `--max-budget-usd <amount>` | API 호출 최대 비용 제한 |
 | `--mcp-config <config>` | MCP 서버 설정 JSON 로드 |
 | `--add-dir <dirs>` | 도구 접근 허용할 추가 디렉토리 |
-| `--no-session-persistence` | 세션 저장 비활성화 |
 | `-v, --version` | 버전 정보 출력 |
 | `-h, --help` | 도움말 출력 |
 
