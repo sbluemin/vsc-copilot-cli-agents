@@ -1,5 +1,5 @@
 {
-  "name": "copilot-cli-agents",
+  "name": "github-copilot-cli-agents",
   "displayName": "Github Copilot CLI Agents",
   "description": "Github Copilot extension for integrating multiple Code Agent CLIs",
   "version": "0.0.1",
