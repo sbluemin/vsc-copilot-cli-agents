@@ -1,11 +1,11 @@
 /**
- * Claude CLI Runner
+ * Claude CLI Provider
  */
 
-import { BaseCliRunner } from './base';
-import { ClaudeStreamMessage, StreamContent } from './types';
+import { SpawnCliRunner } from '../runners';
+import { ClaudeStreamMessage, StreamContent } from '../types';
 
-export class ClaudeCliRunner extends BaseCliRunner {
+export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
 
   protected buildCliOptions(): { command: string; args: string[] } {

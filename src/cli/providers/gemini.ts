@@ -1,11 +1,11 @@
 /**
- * Gemini CLI Runner
+ * Gemini CLI Provider
  */
 
-import { BaseCliRunner } from './base';
-import { GeminiStreamMessage, StreamContent } from './types';
+import { SpawnCliRunner } from '../runners';
+import { GeminiStreamMessage, StreamContent } from '../types';
 
-export class GeminiCliRunner extends BaseCliRunner {
+export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
 
   protected buildCliOptions(): { command: string; args: string[] } {

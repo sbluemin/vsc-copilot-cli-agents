@@ -1,17 +1,17 @@
 /**
- * CLI 실행을 위한 베이스 클래스
+ * Spawn 기반 CLI Runner
  *
  * child_process.spawn을 사용하여 크로스 플랫폼에서 CLI를 실행합니다.
  * shell: true 옵션으로 Windows의 .cmd 래퍼와 Unix 셸 스크립트를 모두 지원합니다.
  */
 
 import { spawn, ChildProcess } from 'child_process';
-import { CliOptions, CliResult, StreamCallback, StreamContent, CliRunner } from './types';
+import { CliOptions, CliResult, StreamCallback, StreamContent, CliRunner } from '../types';
 
 /**
- * CLI Runner 추상 클래스
+ * Spawn 기반 CLI Runner 추상 클래스
  */
-export abstract class BaseCliRunner implements CliRunner {
+export abstract class SpawnCliRunner implements CliRunner {
   abstract readonly name: string;
 
   /**

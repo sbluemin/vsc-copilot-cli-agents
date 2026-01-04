@@ -3,6 +3,5 @@
  */
 
 export * from './types';
-export * from './base';
-export { geminiCli, GeminiCliRunner } from './gemini';
-export { claudeCli, ClaudeCliRunner } from './claude';
+export * from './runners';
+export * from './providers';
