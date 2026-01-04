@@ -23,8 +23,11 @@ This extension adds the following chat participants to GitHub Copilot:
 
 ## Usage
 
-1. Open GitHub Copilot Chat in VS Code.
-2. Type `@gemini` or `@claude` followed by your query.
+1. Install and log in to Gemini CLI or Claude Code.
+   - [Gemini CLI](https://geminicli.com/)
+   - [Claude Code](https://claude.com/product/claude-code)
+2. Open GitHub Copilot Chat in VS Code.
+3. Type `@gemini` or `@claude` followed by your query.
 
 ## Important Notes
 
