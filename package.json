@@ -4,6 +4,7 @@
   "description": "Copilot extension for integrating multiple Code Agent CLIs",
   "version": "0.0.1",
   "publisher": "sbluemin",
+  "icon": "assets/icon.svg",
   "repository": {
     "type": "git",
     "url": "https://github.com/sbluemin/copilot-cli-agents"
@@ -24,14 +25,16 @@
         "fullName": "Gemini",
         "name": "gemini",
         "description": "Google Gemini AI Assistant",
-        "isSticky": true
+        "isSticky": true,
+        "icon": "assets/gemini.svg"
       },
       {
         "id": "copilot-cli-agents.claude",
         "fullName": "Claude",
         "name": "claude",
         "description": "Anthropic Claude AI Assistant",
-        "isSticky": true
+        "isSticky": true,
+        "icon": "assets/claude.svg"
       }
     ],
     "commands": [

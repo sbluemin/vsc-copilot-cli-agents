@@ -17,9 +17,10 @@ function handleStreamContent(
 ): void {
   switch (content.type) {
       case 'tool_use':
-        // 도구 사용을 progress와 reference로 표시
         stream.progress(`🔧 Using tool: ${content.toolName || 'unknown'}`);
         break;
+      case 'tool_result':
+        break;  // none
       default:
         stream.markdown(content.content);
     }

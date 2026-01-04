@@ -37,9 +37,9 @@ function registerParticipant(
   const handler = createParticipantHandler(config);
   const participant = vscode.chat.createChatParticipant(config.id, handler);
   
-  // 아이콘 설정 (선택적)
-  // participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'assets', `${config.cliRunner.name}.png`);
-  
+  // 아이콘 설정
+  participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'assets', `${config.cliRunner.name}.svg`);
+
   return participant;
 }
 
