@@ -34,12 +34,6 @@
         "description": "Anthropic Claude AI Assistant",
         "isSticky": true
       }
-    ],
-    "commands": [
-      {
-        "command": "copilot-cli-agents.startSession",
-        "title": "Start Copilot CLI Agents Session"
-      }
     ]
   },
   "scripts": {
