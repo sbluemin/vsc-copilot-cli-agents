@@ -92,8 +92,7 @@ export abstract class SpawnCliRunner implements CliRunner {
       const childProcess: ChildProcess = spawn(command, allArgs, {
         cwd: cwd || process.cwd(),
         env: process.env,
-        shell: true,
-        // stdio를 pipe로 설정하여 스트리밍 가능하게 함
+        shell: false,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
 

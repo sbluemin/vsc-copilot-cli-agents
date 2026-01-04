@@ -20,7 +20,8 @@ function handleStreamContent(
         stream.progress(`🔧 Using tool: ${content.toolName || 'unknown'}`);
         break;
       case 'tool_result':
-        break;  // none
+        stream.progress(`📥 Tool result from ${content.toolName || 'unknown'}:\n\`\`\`\n${content.content}\n\`\`\``);
+        break;
       default:
         stream.markdown(content.content);
     }
@@ -44,7 +45,7 @@ export function createParticipantHandler(
 
     // 프롬프트가 비어있는 경우
     if (!request.prompt.trim()) {
-      stream.markdown(`**${name}**에게 질문을 입력해주세요.`);
+      stream.markdown(`Please enter a question for **${name}**.`);
     }
 
     try {
