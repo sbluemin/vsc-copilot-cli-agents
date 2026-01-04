@@ -19,6 +19,27 @@ export interface ParseResult {
 }
 
 /**
+ * 프로세스 실행 컨텍스트
+ * 스트리밍 상태와 콜백을 관리하는 컨텍스트 객체
+ */
+interface ProcessContext {
+  /** 전체 누적 콘텐츠 */
+  fullContent: { value: string };
+  /** 라인 버퍼 */
+  buffer: { value: string };
+  /** 추출된 세션 ID */
+  extractedSessionId: { value?: string };
+  /** 스트리밍 콜백 */
+  onContent: StreamCallback;
+  /** abort 시그널 */
+  abortSignal?: AbortSignal;
+  /** abort 핸들러 */
+  abortHandler: () => void;
+  /** Promise resolve 함수 */
+  resolve: (result: CliResult) => void;
+}
+
+/**
  * Spawn 기반 CLI Runner 추상 클래스
  */
 export abstract class SpawnCliRunner implements CliRunner {
@@ -55,17 +76,11 @@ export abstract class SpawnCliRunner implements CliRunner {
   /**
    * 데이터 청크 처리 (stdout/stderr 공통)
    */
-  private processChunk(
-    chunk: Buffer,
-    buffer: { value: string },
-    fullContent: { value: string },
-    extractedSessionId: { value?: string },
-    onContent: StreamCallback
-  ): void {
-    buffer.value += chunk.toString();
-    const lines = buffer.value.split('\n');
+  private processChunk(chunk: Buffer, context: ProcessContext): void {
+    context.buffer.value += chunk.toString();
+    const lines = context.buffer.value.split('\n');
     // 마지막 불완전한 라인은 버퍼에 유지
-    buffer.value = lines.pop() || '';
+    context.buffer.value = lines.pop() || '';
 
     for (const line of lines) {
       const cleanLine = this.cleanAnsi(line).trim();
@@ -76,16 +91,138 @@ export abstract class SpawnCliRunner implements CliRunner {
       const parseResult = this.parseLineWithSession(cleanLine);
 
       // 세션 ID 추출
-      if (parseResult.sessionId && !extractedSessionId.value) {
-        extractedSessionId.value = parseResult.sessionId;
+      if (parseResult.sessionId && !context.extractedSessionId.value) {
+        context.extractedSessionId.value = parseResult.sessionId;
       }
 
       if (parseResult.content) {
         if (parseResult.content.type === 'text') {
-          fullContent.value += parseResult.content.content;
+          context.fullContent.value += parseResult.content.content;
         }
-        onContent(parseResult.content);
+        context.onContent(parseResult.content);
       }
+    }
+  }
+
+  /**
+   * 남은 버퍼 처리
+   */
+  private processRemainingBuffer(context: ProcessContext): void {
+    if (!context.buffer.value.trim()) {
+      return;
+    }
+
+    const cleanLine = this.cleanAnsi(context.buffer.value).trim();
+    const parseResult = this.parseLineWithSession(cleanLine);
+
+    // 세션 ID 추출
+    if (parseResult.sessionId && !context.extractedSessionId.value) {
+      context.extractedSessionId.value = parseResult.sessionId;
+    }
+
+    if (parseResult.content) {
+      if (parseResult.content.type === 'text') {
+        context.fullContent.value += parseResult.content.content;
+      }
+      context.onContent(parseResult.content);
+    }
+  }
+
+  /**
+   * abort 이벤트 리스너 정리
+   */
+  private cleanupAbortListener(context: ProcessContext): void {
+    if (context.abortSignal) {
+      context.abortSignal.removeEventListener('abort', context.abortHandler);
+    }
+  }
+
+  /**
+   * 프로세스 종료 핸들러
+   */
+  private handleProcessClose(exitCode: number | null, context: ProcessContext): void {
+    this.cleanupAbortListener(context);
+    this.processRemainingBuffer(context);
+
+    if (exitCode === 0) {
+      context.resolve({
+        success: true,
+        content: context.fullContent.value,
+        sessionId: context.extractedSessionId.value,
+      });
+    } else {
+      context.resolve({
+        success: false,
+        content: context.fullContent.value,
+        error: `Process exited with code ${exitCode}`,
+        sessionId: context.extractedSessionId.value,
+      });
+    }
+  }
+
+  /**
+   * 프로세스 에러 핸들러
+   */
+  private handleProcessError(err: Error, context: ProcessContext): void {
+    this.cleanupAbortListener(context);
+
+    context.resolve({
+      success: false,
+      content: context.fullContent.value,
+      error: err.message,
+      sessionId: context.extractedSessionId.value,
+    });
+  }
+
+  /**
+   * 프로세스 이벤트 핸들러 등록
+   */
+  private registerProcessHandlers(childProcess: ChildProcess, context: ProcessContext): void {
+    // abort 시그널 처리
+    if (context.abortSignal) {
+      context.abortSignal.addEventListener('abort', context.abortHandler);
+    }
+
+    // stdout 스트리밍 처리
+    childProcess.stdout?.on('data', (chunk: Buffer) => {
+      this.processChunk(chunk, context);
+    });
+
+    // stderr도 함께 처리 (일부 CLI는 stderr로 출력)
+    childProcess.stderr?.on('data', (chunk: Buffer) => {
+      this.processChunk(chunk, context);
+    });
+
+    // 종료 이벤트 처리
+    childProcess.on('close', (exitCode) => {
+      this.handleProcessClose(exitCode, context);
+    });
+
+    // 에러 이벤트 처리
+    childProcess.on('error', (err) => {
+      this.handleProcessError(err, context);
+    });
+  }
+
+  /**
+   * 셸 인자 이스케이프 (플랫폼별 처리)
+   * shell: true일 때 줄바꿈 및 특수문자가 개별 명령으로 해석되지 않도록 처리
+   * @param arg - 이스케이프할 인자
+   * @returns 플랫폼에 맞게 이스케이프된 인자
+   */
+  private escapeShellArg(arg: string): string {
+    if (process.platform === 'win32') {
+      // Windows: 더블쿼트로 감싸고 내부 더블쿼트, 백슬래시, 특수문자 이스케이프
+      // 줄바꿈은 공백으로 치환 (cmd.exe는 줄바꿈을 쿼트 내에서도 명령 구분자로 처리)
+      const escaped = arg
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/[\r\n]+/g, ' ');
+      return `"${escaped}"`;
+    } else {
+      // Unix: 싱글쿼트로 감싸면 내부 문자가 그대로 전달됨
+      // 단, 싱글쿼트 자체만 이스케이프 필요
+      return `'${arg.replace(/'/g, "'\\''")}'`;
     }
   }
 
@@ -97,95 +234,33 @@ export abstract class SpawnCliRunner implements CliRunner {
     const { command, args } = this.buildCliOptions(resumeSessionId);
     const promptArgs = this.buildPromptArgument(prompt);
 
-    // 전체 인자 조합: promptArgs + args
-    const allArgs = [...promptArgs, ...args];
+    // 프롬프트 인자에 셸 이스케이프 적용 (줄바꿈 등 특수문자 처리)
+    const escapedPromptArgs = promptArgs.map((arg) => this.escapeShellArg(arg));
+
+    // 전체 인자 조합: escapedPromptArgs + args
+    const allArgs = [...escapedPromptArgs, ...args];
 
     return new Promise((resolve) => {
-      const fullContent = { value: '' };
-      const buffer = { value: '' };
-      const extractedSessionId: { value?: string } = {};
-
-      // shell: true로 실행하면 크로스 플랫폼에서 동작
-      // Windows: .cmd, .bat 래퍼 자동 인식
-      // Unix: PATH에서 명령어 탐색
       const childProcess: ChildProcess = spawn(command, allArgs, {
         cwd: cwd || process.cwd(),
         env: process.env,
-        shell: false,
+        shell: true,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
 
-      // abort 시그널 처리
-      const abortHandler = () => {
-        childProcess.kill('SIGTERM');
+      // 프로세스 컨텍스트 생성
+      const context: ProcessContext = {
+        fullContent: { value: '' },
+        buffer: { value: '' },
+        extractedSessionId: {},
+        onContent,
+        abortSignal,
+        abortHandler: () => childProcess.kill('SIGTERM'),
+        resolve,
       };
-      if (abortSignal) {
-        abortSignal.addEventListener('abort', abortHandler);
-      }
 
-      // stdout 스트리밍 처리
-      childProcess.stdout?.on('data', (chunk: Buffer) => {
-        this.processChunk(chunk, buffer, fullContent, extractedSessionId, onContent);
-      });
-
-      // stderr도 함께 처리 (일부 CLI는 stderr로 출력)
-      childProcess.stderr?.on('data', (chunk: Buffer) => {
-        this.processChunk(chunk, buffer, fullContent, extractedSessionId, onContent);
-      });
-
-      childProcess.on('close', (exitCode) => {
-        // abort 이벤트 리스너 정리
-        if (abortSignal) {
-          abortSignal.removeEventListener('abort', abortHandler);
-        }
-
-        // 남은 버퍼 처리
-        if (buffer.value.trim()) {
-          const cleanLine = this.cleanAnsi(buffer.value).trim();
-          const parseResult = this.parseLineWithSession(cleanLine);
-
-          // 세션 ID 추출
-          if (parseResult.sessionId && !extractedSessionId.value) {
-            extractedSessionId.value = parseResult.sessionId;
-          }
-
-          if (parseResult.content) {
-            if (parseResult.content.type === 'text') {
-              fullContent.value += parseResult.content.content;
-            }
-            onContent(parseResult.content);
-          }
-        }
-
-        if (exitCode === 0) {
-          resolve({
-            success: true,
-            content: fullContent.value,
-            sessionId: extractedSessionId.value,
-          });
-        } else {
-          resolve({
-            success: false,
-            content: fullContent.value,
-            error: `Process exited with code ${exitCode}`,
-            sessionId: extractedSessionId.value,
-          });
-        }
-      });
-
-      childProcess.on('error', (err) => {
-        // abort 이벤트 리스너 정리
-        if (abortSignal) {
-          abortSignal.removeEventListener('abort', abortHandler);
-        }
-
-        resolve({
-          success: false,
-          content: fullContent.value,
-          error: err.message,
-          sessionId: extractedSessionId.value,
-        });
-      });
+      // 이벤트 핸들러 등록
+      this.registerProcessHandlers(childProcess, context);
     });
   }
 }

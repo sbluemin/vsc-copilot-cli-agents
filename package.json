@@ -2,7 +2,7 @@
   "name": "github-copilot-cli-agents",
   "displayName": "Github Copilot CLI Agents",
   "description": "Github Copilot extension for integrating multiple Code Agent CLIs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "sbluemin",
   "icon": "assets/icon.png",
   "repository": {
@@ -33,6 +33,12 @@
         "name": "claude",
         "description": "Anthropic Claude AI Assistant",
         "isSticky": true
+      }
+    ],
+    "commands": [
+      {
+        "command": "copilot-cli-agents.startSession",
+        "title": "Start Copilot CLI Agents Session"
       }
     ]
   },
