@@ -18,7 +18,7 @@ function registerCommand(
   context: vscode.ExtensionContext,
   config: CommandConfig
 ): vscode.Disposable {
-  return vscode.commands.registerCommand(config.id, config.handler(context));
+  return vscode.commands.registerCommand(config.id, config.handler);
 }
 
 /**

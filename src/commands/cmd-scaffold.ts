@@ -52,8 +52,8 @@ function fileOrSymlinkExists(filePath: string): boolean {
 /**
  * 디렉토리 생성 (이미 존재하면 건너뜀)
  */
-function ensureDirectory(dirPath: string, result: ScaffoldResult): void {
-  const relativePath = path.relative(process.cwd(), dirPath);
+function ensureDirectory(dirPath: string, baseDir: string, result: ScaffoldResult): void {
+  const relativePath = path.relative(baseDir, dirPath);
 
   if (directoryExists(dirPath)) {
     result.skipped.push(`📁 ${relativePath}`);
@@ -74,8 +74,8 @@ function ensureDirectory(dirPath: string, result: ScaffoldResult): void {
 /**
  * 파일 생성 (이미 존재하면 건너뜀)
  */
-function ensureFile(filePath: string, content: string, result: ScaffoldResult): void {
-  const relativePath = path.relative(process.cwd(), filePath);
+function ensureFile(filePath: string, content: string, baseDir: string, result: ScaffoldResult): void {
+  const relativePath = path.relative(baseDir, filePath);
 
   if (fileOrSymlinkExists(filePath)) {
     result.skipped.push(`📄 ${relativePath}`);
@@ -100,14 +100,16 @@ function ensureFile(filePath: string, content: string, result: ScaffoldResult): 
 }
 
 /**
- * 심볼릭 링크 생성 (이미 존재하면 건너뜀)
+ * 심볼릭 링크 또는 정션 생성 (이미 존재하면 건너뜀)
+ * Windows에서는 관리자 권한이 필요 없는 정션(junction)을 사용합니다.
  */
 function ensureSymlink(
   targetPath: string,
   linkPath: string,
+  baseDir: string,
   result: ScaffoldResult
 ): void {
-  const relativeLinkPath = path.relative(process.cwd(), linkPath);
+  const relativeLinkPath = path.relative(baseDir, linkPath);
 
   if (fileOrSymlinkExists(linkPath)) {
     result.skipped.push(`🔗 ${relativeLinkPath}`);
@@ -119,12 +121,28 @@ function ensureSymlink(
     const linkDir = path.dirname(linkPath);
     const relativeTarget = path.relative(linkDir, targetPath);
 
-    fs.symlinkSync(relativeTarget, linkPath);
+    // Windows에서는 정션(junction)을 사용하여 관리자 권한 없이도 링크 생성 가능
+    if (process.platform === 'win32') {
+      fs.symlinkSync(relativeTarget, linkPath, 'junction');
+    } else {
+      fs.symlinkSync(relativeTarget, linkPath);
+    }
     result.created.push(`🔗 ${relativeLinkPath}`);
   } catch (error) {
+    let message = error instanceof Error ? error.message : String(error);
+
+    // Windows에서 권한 오류(EPERM)가 발생한 경우 추가 안내 제공
+    const errObj = error as { code?: string } | undefined;
+    if (process.platform === 'win32' && errObj && errObj.code === 'EPERM') {
+      message =
+        message +
+        ' (On Windows, creating symbolic links usually requires administrator privileges or enabling Developer Mode. ' +
+        'See https://aka.ms/vscode-symlink-permissions for more information.)';
+    }
+
     result.errors.push({
       path: relativeLinkPath,
-      error: error instanceof Error ? error.message : String(error),
+      error: message,
     });
   }
 }
@@ -154,7 +172,7 @@ Describe the coding conventions followed in this project.
 /**
  * 스캐폴딩 결과를 사용자에게 표시
  */
-function showScaffoldResult(selectedDir: string, result: ScaffoldResult): void {
+function showScaffoldResult(result: ScaffoldResult): void {
   const summary: string[] = [];
 
   if (result.created.length > 0) {
@@ -234,44 +252,35 @@ async function handleScaffoldLlm(): Promise<void> {
     errors: [],
   };
 
-  // 현재 작업 디렉토리를 선택된 폴더로 설정 (상대 경로 표시용)
-  const originalCwd = process.cwd();
-  process.chdir(selectedDir);
+  // 2.1. .github/copilot-instructions.md 생성
+  const githubDir = path.join(selectedDir, '.github');
+  const copilotInstructionsPath = path.join(githubDir, 'copilot-instructions.md');
 
-  try {
-    // 2.1. .github/copilot-instructions.md 생성
-    const githubDir = path.join(selectedDir, '.github');
-    const copilotInstructionsPath = path.join(githubDir, 'copilot-instructions.md');
+  ensureDirectory(githubDir, selectedDir, result);
+  ensureFile(copilotInstructionsPath, getDefaultCopilotInstructionsContent(), selectedDir, result);
 
-    ensureDirectory(githubDir, result);
-    ensureFile(copilotInstructionsPath, getDefaultCopilotInstructionsContent(), result);
+  // 2.2 ~ 2.4. .github 하위 디렉토리 및 .gitkeep 생성
+  for (const subDir of GITHUB_SUBDIRECTORIES) {
+    const subDirPath = path.join(githubDir, subDir);
+    const gitkeepPath = path.join(subDirPath, '.gitkeep');
 
-    // 2.2 ~ 2.4. .github 하위 디렉토리 및 .gitkeep 생성
-    for (const subDir of GITHUB_SUBDIRECTORIES) {
-      const subDirPath = path.join(githubDir, subDir);
-      const gitkeepPath = path.join(subDirPath, '.gitkeep');
-
-      ensureDirectory(subDirPath, result);
-      ensureFile(gitkeepPath, '', result);
-    }
-
-    // 2.5. GEMINI.md 심볼릭 링크 생성
-    const geminiLinkPath = path.join(selectedDir, 'GEMINI.md');
-    ensureSymlink(copilotInstructionsPath, geminiLinkPath, result);
-
-    // 2.6. CLAUDE.md 심볼릭 링크 생성
-    const claudeLinkPath = path.join(selectedDir, 'CLAUDE.md');
-    ensureSymlink(copilotInstructionsPath, claudeLinkPath, result);
-
-    // 결과 표시
-    showScaffoldResult(selectedDir, result);
-
-    // 탐색기 새로고침
-    await vscode.commands.executeCommand('workbench.files.action.refreshFilesExplorer');
-  } finally {
-    // 원래 작업 디렉토리 복원
-    process.chdir(originalCwd);
+    ensureDirectory(subDirPath, selectedDir, result);
+    ensureFile(gitkeepPath, '', selectedDir, result);
   }
+
+  // 2.5. GEMINI.md 심볼릭 링크 생성
+  const geminiLinkPath = path.join(selectedDir, 'GEMINI.md');
+  ensureSymlink(copilotInstructionsPath, geminiLinkPath, selectedDir, result);
+
+  // 2.6. CLAUDE.md 심볼릭 링크 생성
+  const claudeLinkPath = path.join(selectedDir, 'CLAUDE.md');
+  ensureSymlink(copilotInstructionsPath, claudeLinkPath, selectedDir, result);
+
+  // 결과 표시
+  showScaffoldResult(result);
+
+  // 탐색기 새로고침
+  await vscode.commands.executeCommand('workbench.files.action.refreshFilesExplorer');
 }
 
 /**
@@ -279,5 +288,5 @@ async function handleScaffoldLlm(): Promise<void> {
  */
 export const scaffoldLlmCommand: CommandConfig = {
   id: 'copilot-cli-agents.scaffold-llm',
-  handler: () => handleScaffoldLlm,
+  handler: handleScaffoldLlm,
 };
