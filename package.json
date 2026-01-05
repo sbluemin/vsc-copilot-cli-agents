@@ -40,8 +40,51 @@
         "command": "copilot-cli-agents.scaffold-llm",
         "title": "Scaffold Code Agents",
         "category": "GitHub Copilot CLI Agents"
+      },
+      {
+        "command": "copilot-cli-agents.change-claude-model",
+        "title": "Change Claude Model",
+        "category": "GitHub Copilot CLI Agents"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "GitHub Copilot CLI Agents",
+      "properties": {
+        "copilot-cli-agents.claude.model": {
+          "type": "string",
+          "default": "sonnet",
+          "enum": ["sonnet", "opus", "haiku"],
+          "enumDescriptions": [
+            "Claude Sonnet (Balanced performance and cost)",
+            "Claude Opus (Most capable, slower and more expensive)",
+            "Claude Haiku (Fastest and most cost-effective)"
+          ],
+          "description": "Default model to use for Claude CLI"
+        },
+        "copilot-cli-agents.claude.customModel": {
+          "type": "string",
+          "description": "Custom model name (e.g., 'claude-sonnet-4-5-20250929'). Overrides the model selection above if set."
+        },
+        "copilot-cli-agents.gemini.model": {
+          "type": "string",
+          "default": "gemini-2.0-flash-exp",
+          "description": "Model to use for Gemini CLI (e.g., 'gemini-2.0-flash-exp', 'gemini-exp-1206')"
+        },
+        "copilot-cli-agents.claude.cliPath": {
+          "type": "string",
+          "description": "Custom path to Claude CLI executable (optional)"
+        },
+        "copilot-cli-agents.gemini.cliPath": {
+          "type": "string",
+          "description": "Custom path to Gemini CLI executable (optional)"
+        },
+        "copilot-cli-agents.timeout": {
+          "type": "number",
+          "default": 120000,
+          "description": "Timeout for CLI requests in milliseconds (default: 120000ms = 2 minutes)"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

@@ -14,6 +14,10 @@ export interface CliOptions {
   abortSignal?: AbortSignal;
   /** 재개할 CLI 세션 ID (resume 용도) */
   resumeSessionId?: string;
+  /** 사용할 모델 (선택적) */
+  model?: string;
+  /** CLI 실행 경로 (선택적) */
+  cliPath?: string;
 }
 
 /**

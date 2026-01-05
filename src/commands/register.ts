@@ -5,11 +5,12 @@
 import * as vscode from 'vscode';
 import { CommandConfig } from './types';
 import { scaffoldLlmCommand } from './cmd-scaffold';
+import { changeClaudeModelCommand } from './cmd-change-model';
 
 /**
  * 등록할 커맨드 목록
  */
-const commands: CommandConfig[] = [scaffoldLlmCommand];
+const commands: CommandConfig[] = [scaffoldLlmCommand, changeClaudeModelCommand];
 
 /**
  * 단일 커맨드 등록

@@ -8,8 +8,24 @@ import { ClaudeStreamMessage, StreamContent } from '../types';
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
 
-  protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
+  /**
+   * CLI 실행 옵션 빌드
+   * @param resumeSessionId - 재개할 세션 ID (선택적)
+   * @param model - 사용할 모델 (선택적)
+   * @param cliPath - CLI 실행 경로 (선택적)
+   * @returns CLI 명령어와 인자 배열
+   */
+  protected buildCliOptions(
+    resumeSessionId?: string,
+    model?: string,
+    cliPath?: string
+  ): { command: string; args: string[] } {
     const args = ['--allowed-tools', 'WebSearch', '--output-format', 'stream-json', '--verbose'];
+
+    // 모델 옵션 추가
+    if (model) {
+      args.push('--model', model);
+    }
 
     // 세션 재개 옵션 추가
     if (resumeSessionId) {
@@ -17,7 +33,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     }
 
     return {
-      command: 'claude',
+      command: cliPath || 'claude', // 커스텀 경로 또는 기본값
       args,
     };
   }

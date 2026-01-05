@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import { StreamContent } from '../cli/types';
 import { ParticipantConfig } from './types';
+import { getClaudeConfig, getGeminiConfig } from '../config';
 
 /**
  * Copilot 대화 세션 ID 생성
@@ -94,6 +95,9 @@ export function createParticipantHandler(
       const abortController = new AbortController();
       const cancelDisposable = token.onCancellationRequested(() => abortController.abort());
 
+      // CLI 설정 조회
+      const cliConfig = cliType === 'claude' ? getClaudeConfig() : getGeminiConfig();
+
       // CLI 실행 (스트리밍)
       const result = await cliRunner.run(
         {
@@ -101,6 +105,8 @@ export function createParticipantHandler(
           cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
           abortSignal: abortController.signal,
           resumeSessionId: existingCliSessionId,
+          model: cliConfig.model, // 설정에서 읽은 모델
+          cliPath: cliConfig.cliPath, // 설정에서 읽은 CLI 경로
         },
         (content) => handleStreamContent(stream, content)
       );

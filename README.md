@@ -40,6 +40,30 @@ This extension provides the following commands:
 2. Open GitHub Copilot Chat in VS Code.
 3. Type `@gemini` or `@claude` followed by your query.
 
+## Configuration
+
+You can customize the behavior of CLI Agents through VS Code settings:
+
+### Model Selection
+
+**Claude:**
+- `copilot-cli-agents.claude.model`: Choose from `sonnet`, `opus`, or `haiku` (default: `sonnet`)
+- `copilot-cli-agents.claude.customModel`: Use a custom model name (e.g., `claude-sonnet-4-5-20250929`)
+  - When set, this overrides the `model` setting above
+
+**Gemini:**
+- `copilot-cli-agents.gemini.model`: Specify Gemini model (default: `gemini-2.0-flash-exp`)
+
+### Other Settings
+
+- `copilot-cli-agents.timeout`: Request timeout in milliseconds (default: `120000` = 2 minutes)
+- `copilot-cli-agents.claude.cliPath`: Custom path to Claude CLI executable (optional)
+- `copilot-cli-agents.gemini.cliPath`: Custom path to Gemini CLI executable (optional)
+
+### Quick Model Switching
+
+You can also use the **"Change Claude Model"** command from the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) for quick model switching.
+
 ## Important Notes
 
 1. When the Participant is first called, a `{workspaceFolder}/.github/copilot-cli-agents.json` file is created.

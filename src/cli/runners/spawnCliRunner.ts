@@ -48,9 +48,11 @@ export abstract class SpawnCliRunner implements CliRunner {
   /**
    * CLI 실행 옵션 빌드
    * @param resumeSessionId - 재개할 세션 ID (선택적)
+   * @param model - 사용할 모델 (선택적)
+   * @param cliPath - CLI 실행 경로 (선택적)
    * @returns CLI 명령어와 추가 인자
    */
-  protected abstract buildCliOptions(resumeSessionId?: string): { command: string; args: string[] };
+  protected abstract buildCliOptions(resumeSessionId?: string, model?: string, cliPath?: string): { command: string; args: string[] };
 
   /**
    * 프롬프트 인자 빌드
@@ -230,8 +232,8 @@ export abstract class SpawnCliRunner implements CliRunner {
    * CLI 실행 (스트리밍)
    */
   async run(options: CliOptions, onContent: StreamCallback): Promise<CliResult> {
-    const { prompt, cwd, abortSignal, resumeSessionId } = options;
-    const { command, args } = this.buildCliOptions(resumeSessionId);
+    const { prompt, cwd, abortSignal, resumeSessionId, model, cliPath } = options;
+    const { command, args } = this.buildCliOptions(resumeSessionId, model, cliPath);
     const promptArgs = this.buildPromptArgument(prompt);
 
     // 프롬프트 인자에 셸 이스케이프 적용 (줄바꿈 등 특수문자 처리)
