@@ -2,12 +2,16 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { registerAllParticipants } from './participants';
+import { registerAllCommands } from './commands';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	// Chat Participants 등록 (@gemini, @claude)
 	registerAllParticipants(context);
+
+	// Commands 등록
+	registerAllCommands(context);
 }
 
 // This method is called when your extension is deactivated
