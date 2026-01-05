@@ -73,6 +73,19 @@ export function createParticipantHandler(
   ): Promise<void> => {
     const { cliRunner, name, cliType, sessionStore } = config;
 
+    // 명령어 처리
+    if (request.command === 'reset') {
+      try {
+        const copilotSessionId = generateCopilotSessionId(context, request.prompt);
+        sessionStore.clearCliSession(copilotSessionId, cliType);
+        stream.markdown(`✅ **${name}** session has been reset.`);
+        return;
+      } catch (error) {
+        stream.markdown(`⚠️ Failed to reset session: ${error instanceof Error ? error.message : String(error)}`);
+        return;
+      }
+    }
+
     // 프롬프트가 비어있는 경우
     if (!request.prompt.trim()) {
       stream.markdown(`Please enter a question for **${name}**.`);

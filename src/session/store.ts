@@ -119,6 +119,18 @@ export class SessionStore {
   }
 
   /**
+   * 특정 CLI 세션 정보 삭제 (초기화)
+   * @param copilotSessionId - VSCode Copilot 세션 ID
+   * @param cliType - CLI 타입
+   */
+  clearCliSession(copilotSessionId: string, cliType: CliType): void {
+    if (this.data.sessions[copilotSessionId] && this.data.sessions[copilotSessionId][cliType]) {
+      delete this.data.sessions[copilotSessionId][cliType];
+      this.save();
+    }
+  }
+
+  /**
    * 특정 Copilot 세션의 모든 매핑 조회
    * @param copilotSessionId - VSCode Copilot 세션 ID
    * @returns 세션 매핑 또는 undefined

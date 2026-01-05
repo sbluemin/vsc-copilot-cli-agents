@@ -25,14 +25,26 @@
         "fullName": "Gemini",
         "name": "gemini",
         "description": "Google Gemini AI Assistant",
-        "isSticky": true
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "reset",
+            "description": "Reset the current CLI session"
+          }
+        ]
       },
       {
         "id": "copilot-cli-agents.claude",
         "fullName": "Claude",
         "name": "claude",
         "description": "Anthropic Claude AI Assistant",
-        "isSticky": true
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "reset",
+            "description": "Reset the current CLI session"
+          }
+        ]
       }
     ],
     "commands": [
