@@ -58,6 +58,36 @@ function handleStreamContent(
 }
 
 /**
+ * /reset 명령어 핸들러
+ */
+async function handleResetCommand(
+  request: vscode.ChatRequest,
+  context: vscode.ChatContext,
+  stream: vscode.ChatResponseStream,
+  config: ParticipantConfig
+): Promise<void> {
+  const { name, cliType, sessionStore } = config;
+
+  try {
+    // 리셋 가능한 기존 세션이 있는지 확인
+    const hasExistingRequestTurn = context.history.some(
+      (turn) => turn instanceof vscode.ChatRequestTurn
+    );
+
+    if (!hasExistingRequestTurn) {
+      stream.markdown(`There is no active session to reset for **${name}** yet.`);
+      return;
+    }
+
+    const copilotSessionId = generateCopilotSessionId(context, request.prompt);
+    sessionStore.clearCliSession(copilotSessionId, cliType);
+    stream.markdown(`✅ **${name}** session has been reset.`);
+  } catch (error) {
+    stream.markdown(`⚠️ Failed to reset session: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
  * Chat Participant 핸들러 생성
  * @param config - Participant 설정
  * @returns Chat Request Handler
@@ -75,15 +105,8 @@ export function createParticipantHandler(
 
     // 명령어 처리
     if (request.command === 'reset') {
-      try {
-        const copilotSessionId = generateCopilotSessionId(context, request.prompt);
-        sessionStore.clearCliSession(copilotSessionId, cliType);
-        stream.markdown(`✅ **${name}** session has been reset.`);
-        return;
-      } catch (error) {
-        stream.markdown(`⚠️ Failed to reset session: ${error instanceof Error ? error.message : String(error)}`);
-        return;
-      }
+      await handleResetCommand(request, context, stream, config);
+      return;
     }
 
     // 프롬프트가 비어있는 경우
