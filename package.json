@@ -1,7 +1,7 @@
 {
   "name": "github-copilot-cli-agents",
-  "displayName": "Github Copilot CLI Agents",
-  "description": "Github Copilot extension for integrating multiple Code Agent CLIs",
+  "displayName": "GitHub Copilot CLI Agents",
+  "description": "GitHub Copilot extension for integrating multiple Code Agent CLIs",
   "version": "0.0.0-placeholder",
   "publisher": "sbluemin",
   "icon": "assets/icon.png",
@@ -39,7 +39,7 @@
       {
         "command": "copilot-cli-agents.scaffold-llm",
         "title": "Scaffold Code Agents",
-        "category": "Github Copilot CLI Agents"
+        "category": "GitHub Copilot CLI Agents"
       }
     ]
   },
