@@ -1,5 +1,11 @@
 # VS Code Extension Development Guidelines
 
+## Language Conventions
+
+- **Code Comments**: Write all code comments in Korean (한글)
+- **User-Facing Messages**: Write all user-facing messages (errors, warnings, info dialogs, etc.) in English
+- **Documentation**: Write documentation in English
+
 ## Project Structure
 
 ```

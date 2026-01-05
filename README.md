@@ -14,12 +14,23 @@ On the other hand, pure models like Gemini and Claude (such as Sonnet 4.5 with i
 
 ## Features
 
+### Chat Participants
+
 This extension adds the following chat participants to GitHub Copilot:
 
 - **@gemini**: Google Gemini AI Assistant
 - **@claude**: Anthropic Claude AI Assistant
 
 > **Note**: Since Gemini and Claude are used directly as CLIs, Copilot's request processing is not used.
+
+### Commands
+
+This extension provides the following commands:
+
+- **Scaffold Code Agents**: Creates the recommended project structure for Code Agent integration
+  - Command ID: `copilot-cli-agents.scaffold-llm`
+  - Creates `.github/copilot-instructions.md` and related directories (`agents`, `prompts`, `instructions`)
+  - Sets up `GEMINI.md` and `CLAUDE.md` symlinks at the project root for agent-specific instructions
 
 ## Usage
 
