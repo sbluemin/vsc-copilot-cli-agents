@@ -41,7 +41,31 @@
         "title": "Scaffold Code Agents",
         "category": "GitHub Copilot CLI Agents"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "GitHub Copilot CLI Agents",
+      "properties": {
+        "copilot-cli-agents.gemini.model": {
+          "type": "string",
+          "enum": [
+            "gemini-3-pro",
+            "gemini-3-flash"
+          ],
+          "default": "gemini-3-flash",
+          "description": "Select the model for Gemini CLI."
+        },
+        "copilot-cli-agents.claude.model": {
+          "type": "string",
+          "enum": [
+            "haiku",
+            "sonnet",
+            "opus"
+          ],
+          "default": "haiku",
+          "description": "Select the model for Claude CLI."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

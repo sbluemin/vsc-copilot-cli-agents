@@ -2,6 +2,7 @@
  * Claude CLI Provider
  */
 
+import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
 import { ClaudeStreamMessage, StreamContent } from '../types';
 
@@ -9,7 +10,14 @@ export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
 
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
+    const config = vscode.workspace.getConfiguration('copilot-cli-agents');
+    const model = config.get<string>('claude.model');
+
     const args = ['--allowed-tools', 'WebSearch', '--output-format', 'stream-json', '--verbose'];
+
+    if (model) {
+      args.push('--model', model);
+    }
 
     // 세션 재개 옵션 추가
     if (resumeSessionId) {
