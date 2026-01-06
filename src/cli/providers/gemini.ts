@@ -2,6 +2,7 @@
  * Gemini CLI Provider
  */
 
+import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
 import { GeminiStreamMessage, StreamContent } from '../types';
 
@@ -9,7 +10,14 @@ export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
 
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
+    const config = vscode.workspace.getConfiguration('copilot-cli-agents');
+    const model = config.get<string>('gemini.model');
+
     const args = ['--allowed-tools', 'google_web_search', '--output-format', 'stream-json'];
+
+    if (model) {
+      args.push('--model', model);
+    }
 
     // 세션 재개 옵션 추가
     if (resumeSessionId) {
