@@ -48,10 +48,12 @@
         "copilot-cli-agents.gemini.model": {
           "type": "string",
           "enum": [
-            "gemini-3-pro",
-            "gemini-3-flash"
+            "gemini-3-pro-preview",
+            "gemini-3-flash-preview",
+            "gemini-2.5-pro",
+            "gemini-2.5-flash"
           ],
-          "default": "gemini-3-flash",
+          "default": "gemini-3-flash-preview",
           "description": "Select the model for Gemini CLI."
         },
         "copilot-cli-agents.claude.model": {
