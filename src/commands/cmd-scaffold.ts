@@ -148,24 +148,20 @@ function ensureSymlink(
 }
 
 /**
- * 기본 copilot-instructions.md 내용
+ * 기본 AGENTS.md 내용 (섹션 헤더만 포함)
  */
-function getDefaultCopilotInstructionsContent(): string {
-  return `# Copilot Instructions
+function getDefaultAgentsContent(): string {
+  return `# <Your Instructions Here>
 
-This file provides instructions to GitHub Copilot and other Code Agents.
+...
 
-## Project Overview
+## Additional Instructions
 
-Add a description of your project here.
+**Before modifying any file, follow these steps:**
 
-## Coding Conventions
-
-Describe the coding conventions followed in this project.
-
-## References
-
-- [GitHub Copilot Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-instructions)
+1. Search for matching instructions in @.github/instructions/*.md
+2. Check if the current file matches the \`applyTo\` pattern in each instruction file
+3. If it matches, read the complete instruction file and apply all guidelines
 `;
 }
 
@@ -252,14 +248,16 @@ async function handleScaffoldLlm(): Promise<void> {
     errors: [],
   };
 
-  // 2.1. .github/copilot-instructions.md 생성
+  // 3. 스캐폴딩 수행
+
+  // 3.1. AGENTS.md 파일 생성 (프로젝트 루트)
+  const agentsPath = path.join(selectedDir, 'AGENTS.md');
+  ensureFile(agentsPath, getDefaultAgentsContent(), selectedDir, result);
+
+  // 3.2. .github 디렉토리 및 하위 디렉토리 생성
   const githubDir = path.join(selectedDir, '.github');
-  const copilotInstructionsPath = path.join(githubDir, 'copilot-instructions.md');
-
   ensureDirectory(githubDir, selectedDir, result);
-  ensureFile(copilotInstructionsPath, getDefaultCopilotInstructionsContent(), selectedDir, result);
 
-  // 2.2 ~ 2.4. .github 하위 디렉토리 및 .gitkeep 생성
   for (const subDir of GITHUB_SUBDIRECTORIES) {
     const subDirPath = path.join(githubDir, subDir);
     const gitkeepPath = path.join(subDirPath, '.gitkeep');
@@ -268,13 +266,9 @@ async function handleScaffoldLlm(): Promise<void> {
     ensureFile(gitkeepPath, '', selectedDir, result);
   }
 
-  // 2.5. GEMINI.md 심볼릭 링크 생성
-  const geminiLinkPath = path.join(selectedDir, 'GEMINI.md');
-  ensureSymlink(copilotInstructionsPath, geminiLinkPath, selectedDir, result);
-
-  // 2.6. CLAUDE.md 심볼릭 링크 생성
+  // 3.3. CLAUDE.md → AGENTS.md 심볼릭 링크 생성
   const claudeLinkPath = path.join(selectedDir, 'CLAUDE.md');
-  ensureSymlink(copilotInstructionsPath, claudeLinkPath, selectedDir, result);
+  ensureSymlink(agentsPath, claudeLinkPath, selectedDir, result);
 
   // 결과 표시
   showScaffoldResult(result);
