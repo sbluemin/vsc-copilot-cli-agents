@@ -2,6 +2,7 @@
   "name": "github-copilot-cli-agents",
   "displayName": "GitHub Copilot CLI Agents",
   "description": "GitHub Copilot extension for integrating multiple Code Agent CLIs",
+  "preview": true,
   "version": "0.0.0-placeholder",
   "publisher": "sbluemin",
   "icon": "assets/icon.png",
