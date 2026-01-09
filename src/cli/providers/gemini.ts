@@ -131,7 +131,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
       ],
       links: [
         {
-          label: 'Gemini CLI',
+          label: 'Gemini CLI Installation Guide',
           url: 'https://geminicli.com/',
         },
       ],

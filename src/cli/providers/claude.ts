@@ -139,7 +139,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
       links: [
         {
           label: 'Claude CLI Installation Guide',
-          url: 'https://docs.anthropic.com/en/docs/anthropic-cli',
+          url: 'https://claude.com/product/claude-code',
         },
       ],
     };
