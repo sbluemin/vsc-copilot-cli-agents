@@ -58,7 +58,7 @@
     "configuration": {
       "title": "GitHub Copilot CLI Agents",
       "properties": {
-        "copilot-cli-agents.gemini.model": {
+        "CCA.gemini.model": {
           "type": "string",
           "enum": [
             "gemini-3-pro-preview",
@@ -69,7 +69,7 @@
           "default": "gemini-3-flash-preview",
           "description": "Select the model for Gemini CLI."
         },
-        "copilot-cli-agents.claude.model": {
+        "CCA.claude.model": {
           "type": "string",
           "enum": [
             "haiku",

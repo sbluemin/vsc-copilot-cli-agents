@@ -11,7 +11,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
 
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
-    const config = vscode.workspace.getConfiguration('copilot-cli-agents');
+    const config = vscode.workspace.getConfiguration('CCA');
     const model = config.get<string>('claude.model');
 
     const args = ['--allowed-tools', 'WebSearch', '--output-format', 'stream-json', '--verbose'];
