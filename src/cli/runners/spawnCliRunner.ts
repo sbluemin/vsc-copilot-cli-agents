@@ -76,8 +76,6 @@ export abstract class SpawnCliRunner implements CliRunner {
    */
   protected abstract parseLineWithSession(line: string): ParseResult;
 
-  // ===== Doctor 관련 추상 메서드 =====
-
   /**
    * CLI 설치 상태 확인
    * @returns 설치 정보
