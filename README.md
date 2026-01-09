@@ -32,6 +32,14 @@ This extension provides the following commands:
   - Creates `.github/copilot-instructions.md` and related directories (`agents`, `prompts`, `instructions`)
   - Sets up `GEMINI.md` and `CLAUDE.md` symlinks at the project root for agent-specific instructions
 
+### Configurations
+
+This extension provides the following configurations:
+
+- **Model Selection**: Select the underlying model for each agent
+  - Gemini: `copilot-cli-agents.gemini.model` (e.g., `gemini-3-flash-preview`)
+  - Claude: `copilot-cli-agents.claude.model` (e.g., `haiku`)
+
 ## Usage
 
 1. Install and log in to Gemini CLI or Claude Code.
