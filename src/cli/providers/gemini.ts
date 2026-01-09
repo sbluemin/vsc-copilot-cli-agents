@@ -7,6 +7,7 @@ import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
 import { GeminiStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
+import { executeCommand } from '../utils/commandExecutor';
 
 const execAsync = promisify(exec);
 
@@ -84,14 +85,14 @@ export class GeminiCliRunner extends SpawnCliRunner {
     try {
       // which/where 명령으로 경로 확인 (spawn으로 안전하게 실행)
       const whichCmd = process.platform === 'win32' ? 'where' : 'which';
-      const pathOutput = await this.executeCommand(whichCmd, ['gemini'], 10000);
+      const pathOutput = await executeCommand(whichCmd, ['gemini'], 10000);
       const cliPath = pathOutput
         .split(/\r?\n/)
         .map(line => line.trim())
         .filter(line => line.length > 0)[0];
 
       // 버전 확인 (spawn으로 안전하게 실행)
-      const versionOutput = await this.executeCommand('gemini', ['--version'], 10000);
+      const versionOutput = await executeCommand('gemini', ['--version'], 10000);
       const version = versionOutput.trim();
 
       return {
@@ -122,44 +123,6 @@ export class GeminiCliRunner extends SpawnCliRunner {
         error: errorMessage,
       };
     }
-  }
-
-  /**
-   * spawn을 사용하여 명령을 안전하게 실행
-   */
-  private executeCommand(command: string, args: string[], timeoutMs: number): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const process = spawn(command, args);
-      let stdout = '';
-      let stderr = '';
-
-      const timer = setTimeout(() => {
-        process.kill('SIGTERM');
-        reject(new Error('Command execution timed out'));
-      }, timeoutMs);
-
-      process.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      process.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      process.on('error', (error) => {
-        clearTimeout(timer);
-        reject(error);
-      });
-
-      process.on('close', (code) => {
-        clearTimeout(timer);
-        if (code === 0) {
-          resolve(stdout);
-        } else {
-          reject(new Error(stderr || `Command exited with code ${code}`));
-        }
-      });
-    });
   }
 
   protected getInstallGuidance(): HealthGuidance {
