@@ -10,25 +10,31 @@
 
 ```text
 copilot-cli-agents/
+├── .github/           # GitHub configuration and docs
+│   ├── docs/          # Documentation
+│   ├── instructions/  # Agent instructions
+│   ├── references/    # CLI documentation
+│   └── workflows/     # CI/CD workflows
 ├── .vscode/           # VS Code configuration files
 │   ├── launch.json    # Debug configuration
 │   ├── tasks.json     # Build task configuration
 │   └── settings.json  # Workspace settings
+├── assets/            # Extension assets (icons, etc.)
 ├── src/
-│   ├── extension.ts   # Extension entry point
-│   └── test/          # Test files
-├── dist/              # Compiled output (esbuild)
+│   ├── cli/           # CLI wrapper implementations
+│   ├── commands/      # VS Code command handlers
+│   ├── participants/  # Chat participant implementations
+│   ├── session/       # Session management
+│   └── extension.ts   # Extension entry point
+├── dist/              # Compiled output
 ├── package.json       # Extension manifest
-├── tsconfig.json      # TypeScript configuration
-└── esbuild.js         # Bundler configuration
+└── tsconfig.json      # TypeScript configuration
 ```
 
 ## Key Commands
 
 - `npm run compile` - Build the project
 - `npm run watch` - Build in watch mode
-- `npm run lint` - Run ESLint
-- `npm run test` - Run tests
 - `vsce package` - Create .vsix file
 - `vsce publish` - Publish to Marketplace
 
