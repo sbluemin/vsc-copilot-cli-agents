@@ -23,6 +23,14 @@ This extension adds the following chat participants to GitHub Copilot:
 
 > **Note**: Since Gemini and Claude are used directly as CLIs, Copilot's request processing is not used.
 
+#### Slash Commands
+
+Each chat participant supports the following slash commands:
+
+- **/doctor**: Check CLI installation status and verify it's working properly
+  - Validates CLI installation (version, path)
+  - Provides installation guide if CLI is not found
+
 ### Commands
 
 This extension provides the following commands:

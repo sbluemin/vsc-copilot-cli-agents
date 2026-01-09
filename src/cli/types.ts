@@ -106,6 +106,59 @@ export interface ClaudeStreamMessage {
 }
 
 /**
+ * CLI 설치 상태
+ */
+export type InstallStatus = 'installed' | 'not_installed' | 'unknown';
+
+/**
+ * CLI 설치 정보
+ */
+export interface InstallInfo {
+  /** 설치 상태 */
+  status: InstallStatus;
+  /** CLI 버전 */
+  version?: string;
+  /** CLI 실행 파일 경로 */
+  path?: string;
+  /** 에러 메시지 */
+  error?: string;
+}
+
+/**
+ * CLI 상태 정보
+ */
+export interface CliHealthStatus {
+  /** CLI 이름 */
+  cli: string;
+  /** 설치 정보 */
+  install: InstallInfo;
+  /** 검사 시각 */
+  checkedAt: Date;
+}
+
+/**
+ * 해결 가이드
+ */
+export interface HealthGuidance {
+  /** 가이드 제목 */
+  title: string;
+  /** 해결 단계 */
+  steps: string[];
+  /** 관련 링크 */
+  links?: Array<{ label: string; url: string }>;
+}
+
+/**
+ * Doctor 검증 결과
+ */
+export interface DoctorResult {
+  /** 상태 정보 */
+  status: CliHealthStatus;
+  /** 설치 가이드 */
+  installGuidance: HealthGuidance;
+}
+
+/**
  * CLI Runner 인터페이스
  */
 export interface CliRunner {
@@ -119,4 +172,10 @@ export interface CliRunner {
    * @returns 실행 결과
    */
   run(options: CliOptions, onContent: StreamCallback): Promise<CliResult>;
+
+  /**
+   * CLI 상태 검증 (doctor)
+   * @returns Doctor 검증 결과 (상태 + 가이드)
+   */
+  doctor(): Promise<DoctorResult>;
 }

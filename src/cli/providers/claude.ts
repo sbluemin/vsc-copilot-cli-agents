@@ -4,7 +4,8 @@
 
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
-import { ClaudeStreamMessage, StreamContent } from '../types';
+import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
+import { executeCommand } from '../utils/commandExecutor';
 
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
@@ -82,9 +83,71 @@ export class ClaudeCliRunner extends SpawnCliRunner {
       return { content: null };
     }
   }
+  
+  protected async checkInstallation(): Promise<InstallInfo> {
+    try {
+      // which/where 명령으로 경로 확인 (spawn으로 안전하게 실행)
+      const whichCmd = process.platform === 'win32' ? 'where' : 'which';
+      const pathOutput = await executeCommand(whichCmd, ['claude'], 10000);
+      const cliPath = pathOutput
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)[0];
+
+      // 버전 확인 (spawn으로 안전하게 실행)
+      const versionOutput = await executeCommand('claude', ['--version'], 10000);
+      const version = versionOutput.trim();
+
+      return {
+        status: 'installed',
+        version,
+        path: cliPath,
+      };
+    } catch (error: unknown) {
+      let errorMessage = 'Claude CLI not found in PATH';
+
+      if (error && typeof error === 'object') {
+        const err = error as { code?: string; signal?: string; message?: string; killed?: boolean };
+
+        // 다양한 오류 유형 감지
+        if (err.code === 'ETIMEDOUT' || (err.killed && err.signal === 'SIGTERM')) {
+          errorMessage = 'Timed out while checking Claude CLI installation';
+        } else if (err.code === 'ENOENT') {
+          errorMessage = 'Claude CLI executable not found. Ensure it is installed and on your PATH.';
+        } else if (err.code === 'EACCES') {
+          errorMessage = 'Permission denied while executing Claude CLI. Check executable permissions.';
+        } else if (err.message && err.message.trim() !== '') {
+          errorMessage = `Failed to verify Claude CLI installation: ${err.message}`;
+        }
+      }
+
+      return {
+        status: 'not_installed',
+        error: errorMessage,
+      };
+    }
+  }
+
+  protected getInstallGuidance(): HealthGuidance {
+    return {
+      title: 'How to Install',
+      steps: [
+        'Visit the official installation page',
+        'Follow the installation instructions for your platform',
+        'After installation, run `@claude /doctor` again to verify',
+      ],
+      links: [
+        {
+          label: 'Claude CLI Installation Guide',
+          url: 'https://claude.com/product/claude-code',
+        },
+      ],
+    };
+  }
 }
 
 /**
  * Claude CLI Runner 싱글톤 인스턴스
  */
 export const claudeCli = new ClaudeCliRunner();
+

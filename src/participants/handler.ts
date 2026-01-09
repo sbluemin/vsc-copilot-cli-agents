@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import { StreamContent } from '../cli/types';
+import { formatHealthReport } from '../cli/utils';
 import { ParticipantConfig } from './types';
 
 /**
@@ -72,6 +73,20 @@ export function createParticipantHandler(
     token: vscode.CancellationToken
   ): Promise<void> => {
     const { cliRunner, name, cliType, sessionStore } = config;
+
+    // /doctor 커맨드 처리
+    if (request.command === 'doctor') {
+      try {
+        stream.progress(`🔍 Checking ${name} CLI status...`);
+        const result = await cliRunner.doctor();
+        const report = formatHealthReport(result);
+        stream.markdown(report);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        stream.markdown(`❌ **Error during health check:** ${errorMessage}`);
+      }
+      return;
+    }
 
     // 프롬프트가 비어있는 경우
     if (!request.prompt.trim()) {
