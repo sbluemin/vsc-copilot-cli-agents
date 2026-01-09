@@ -2,7 +2,7 @@
  * Claude CLI Provider
  */
 
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
@@ -89,13 +89,16 @@ export class ClaudeCliRunner extends SpawnCliRunner {
   
   protected async checkInstallation(): Promise<InstallInfo> {
     try {
-      // which/where 명령으로 경로 확인
+      // which/where 명령으로 경로 확인 (spawn으로 안전하게 실행)
       const whichCmd = process.platform === 'win32' ? 'where' : 'which';
-      const { stdout: pathOutput } = await execAsync(`${whichCmd} claude`, { timeout: 10000 });
-      const cliPath = pathOutput.trim().split('\n')[0];
+      const pathOutput = await this.executeCommand(whichCmd, ['claude'], 10000);
+      const cliPath = pathOutput
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)[0];
 
-      // 버전 확인
-      const { stdout: versionOutput } = await execAsync('claude --version', { timeout: 10000 });
+      // 버전 확인 (spawn으로 안전하게 실행)
+      const versionOutput = await this.executeCommand('claude', ['--version'], 10000);
       const version = versionOutput.trim();
 
       return {
@@ -103,12 +106,67 @@ export class ClaudeCliRunner extends SpawnCliRunner {
         version,
         path: cliPath,
       };
-    } catch {
+    } catch (error: unknown) {
+      let errorMessage = 'Claude CLI not found in PATH';
+
+      if (error && typeof error === 'object') {
+        const err = error as { code?: string; signal?: string; message?: string; killed?: boolean };
+
+        // 다양한 오류 유형 감지
+        if (err.code === 'ETIMEDOUT' || (err.killed && err.signal === 'SIGTERM')) {
+          errorMessage = 'Timed out while checking Claude CLI installation';
+        } else if (err.code === 'ENOENT') {
+          errorMessage = 'Claude CLI executable not found. Ensure it is installed and on your PATH.';
+        } else if (err.code === 'EACCES') {
+          errorMessage = 'Permission denied while executing Claude CLI. Check executable permissions.';
+        } else if (err.message && err.message.trim() !== '') {
+          errorMessage = `Failed to verify Claude CLI installation: ${err.message}`;
+        }
+      }
+
       return {
         status: 'not_installed',
-        error: 'Claude CLI not found in PATH',
+        error: errorMessage,
       };
     }
+  }
+
+  /**
+   * spawn을 사용하여 명령을 안전하게 실행
+   */
+  private executeCommand(command: string, args: string[], timeoutMs: number): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const process = spawn(command, args);
+      let stdout = '';
+      let stderr = '';
+
+      const timer = setTimeout(() => {
+        process.kill('SIGTERM');
+        reject(new Error('Command execution timed out'));
+      }, timeoutMs);
+
+      process.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      process.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      process.on('error', (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+
+      process.on('close', (code) => {
+        clearTimeout(timer);
+        if (code === 0) {
+          resolve(stdout);
+        } else {
+          reject(new Error(stderr || `Command exited with code ${code}`));
+        }
+      });
+    });
   }
 
   protected getInstallGuidance(): HealthGuidance {
@@ -121,8 +179,8 @@ export class ClaudeCliRunner extends SpawnCliRunner {
       ],
       links: [
         {
-          label: 'Claude Code Installation',
-          url: 'https://claude.com/product/claude-code',
+          label: 'Claude CLI Installation Guide',
+          url: 'https://docs.anthropic.com/en/docs/anthropic-cli',
         },
       ],
     };
