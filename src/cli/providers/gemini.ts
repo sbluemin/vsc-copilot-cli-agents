@@ -2,14 +2,10 @@
  * Gemini CLI Provider
  */
 
-import { exec, spawn } from 'child_process';
-import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
 import { GeminiStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
 import { executeCommand } from '../utils/commandExecutor';
-
-const execAsync = promisify(exec);
 
 export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
@@ -133,7 +129,12 @@ export class GeminiCliRunner extends SpawnCliRunner {
         'Follow the installation instructions for your platform',
         'After installation, run `@gemini /doctor` again to verify',
       ],
-      links: [],
+      links: [
+        {
+          label: 'Gemini CLI',
+          url: 'https://geminicli.com/',
+        },
+      ],
     };
   }
 }

@@ -2,14 +2,10 @@
  * Claude CLI Provider
  */
 
-import { exec, spawn } from 'child_process';
-import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
 import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
 import { executeCommand } from '../utils/commandExecutor';
-
-const execAsync = promisify(exec);
 
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
