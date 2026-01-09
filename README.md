@@ -45,8 +45,8 @@ This extension provides the following commands:
 This extension provides the following configurations:
 
 - **Model Selection**: Select the underlying model for each agent
-  - Gemini: `copilot-cli-agents.gemini.model` (e.g., `gemini-3-flash-preview`)
-  - Claude: `copilot-cli-agents.claude.model` (e.g., `haiku`)
+  - Gemini: `CCA.gemini.model` (e.g., `gemini-3-flash-preview`)
+  - Claude: `CCA.claude.model` (e.g., `haiku`)
 
 ## Usage
 

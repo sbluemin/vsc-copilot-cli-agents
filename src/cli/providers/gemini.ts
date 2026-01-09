@@ -11,7 +11,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
 
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
-    const config = vscode.workspace.getConfiguration('copilot-cli-agents');
+    const config = vscode.workspace.getConfiguration('CCA');
     const model = config.get<string>('gemini.model');
 
     const args = ['--allowed-tools', 'google_web_search', '--output-format', 'stream-json'];
