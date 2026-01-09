@@ -27,6 +27,7 @@ export function formatHealthReport(result: DoctorResult): string {
   const { status, installGuidance } = result;
   const cliName = status.cli.charAt(0).toUpperCase() + status.cli.slice(1);
   const { install } = status;
+  const timestamp = status.checkedAt.toLocaleString();
 
   // 설치됨
   if (install.status === 'installed') {
@@ -34,6 +35,7 @@ export function formatHealthReport(result: DoctorResult): string {
 
 ### Installation
 - **Status**: ✅ Installed${install.version ? `\n- **Version**: ${install.version}` : ''}${install.path ? `\n- **Path**: \`${install.path}\`` : ''}
+- **Checked At**: ${timestamp}
 
 ---
 ✅ All checks passed. ${cliName} CLI is ready to use.`;
@@ -44,6 +46,7 @@ export function formatHealthReport(result: DoctorResult): string {
 
 ### Installation
 - **Status**: ❌ Not Installed
+- **Checked At**: ${timestamp}
 
 ${formatGuidance(installGuidance)}
 

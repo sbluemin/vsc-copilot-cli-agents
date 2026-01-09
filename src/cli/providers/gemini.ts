@@ -2,13 +2,10 @@
  * Gemini CLI Provider
  */
 
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
 import { GeminiStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
-
-const execAsync = promisify(exec);
+import { executeCommand } from '../utils/commandExecutor';
 
 export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
@@ -82,11 +79,16 @@ export class GeminiCliRunner extends SpawnCliRunner {
 
   protected async checkInstallation(): Promise<InstallInfo> {
     try {
+      // which/where 명령으로 경로 확인 (spawn으로 안전하게 실행)
       const whichCmd = process.platform === 'win32' ? 'where' : 'which';
-      const { stdout: pathOutput } = await execAsync(`${whichCmd} gemini`, { timeout: 10000 });
-      const cliPath = pathOutput.trim().split('\n')[0];
+      const pathOutput = await executeCommand(whichCmd, ['gemini'], 10000);
+      const cliPath = pathOutput
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)[0];
 
-      const { stdout: versionOutput } = await execAsync('gemini --version', { timeout: 10000 });
+      // 버전 확인 (spawn으로 안전하게 실행)
+      const versionOutput = await executeCommand('gemini', ['--version'], 10000);
       const version = versionOutput.trim();
 
       return {
@@ -94,10 +96,27 @@ export class GeminiCliRunner extends SpawnCliRunner {
         version,
         path: cliPath,
       };
-    } catch {
+    } catch (error: unknown) {
+      let errorMessage = 'Gemini CLI not found in PATH';
+
+      if (error && typeof error === 'object') {
+        const err = error as { code?: string; signal?: string; message?: string; killed?: boolean };
+
+        // 다양한 오류 유형 감지
+        if (err.code === 'ETIMEDOUT' || (err.killed && err.signal === 'SIGTERM')) {
+          errorMessage = 'Timed out while checking Gemini CLI installation';
+        } else if (err.code === 'ENOENT') {
+          errorMessage = 'Gemini CLI executable not found. Ensure it is installed and on your PATH.';
+        } else if (err.code === 'EACCES') {
+          errorMessage = 'Permission denied while executing Gemini CLI. Check executable permissions.';
+        } else if (err.message && err.message.trim() !== '') {
+          errorMessage = `Failed to verify Gemini CLI installation: ${err.message}`;
+        }
+      }
+
       return {
         status: 'not_installed',
-        error: 'Gemini CLI not found in PATH',
+        error: errorMessage,
       };
     }
   }
@@ -112,7 +131,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
       ],
       links: [
         {
-          label: 'Gemini CLI GitHub',
+          label: 'Gemini CLI Installation Guide',
           url: 'https://geminicli.com/',
         },
       ],
