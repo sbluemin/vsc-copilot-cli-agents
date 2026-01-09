@@ -2,9 +2,13 @@
  * Claude CLI Provider
  */
 
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
-import { ClaudeStreamMessage, StreamContent } from '../types';
+import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
+
+const execAsync = promisify(exec);
 
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
@@ -82,9 +86,51 @@ export class ClaudeCliRunner extends SpawnCliRunner {
       return { content: null };
     }
   }
+  
+  protected async checkInstallation(): Promise<InstallInfo> {
+    try {
+      // which/where 명령으로 경로 확인
+      const whichCmd = process.platform === 'win32' ? 'where' : 'which';
+      const { stdout: pathOutput } = await execAsync(`${whichCmd} claude`, { timeout: 10000 });
+      const cliPath = pathOutput.trim().split('\n')[0];
+
+      // 버전 확인
+      const { stdout: versionOutput } = await execAsync('claude --version', { timeout: 10000 });
+      const version = versionOutput.trim();
+
+      return {
+        status: 'installed',
+        version,
+        path: cliPath,
+      };
+    } catch {
+      return {
+        status: 'not_installed',
+        error: 'Claude CLI not found in PATH',
+      };
+    }
+  }
+
+  protected getInstallGuidance(): HealthGuidance {
+    return {
+      title: 'How to Install',
+      steps: [
+        'Visit the official installation page',
+        'Follow the installation instructions for your platform',
+        'After installation, run `@claude /doctor` again to verify',
+      ],
+      links: [
+        {
+          label: 'Claude Code Installation',
+          url: 'https://claude.com/product/claude-code',
+        },
+      ],
+    };
+  }
 }
 
 /**
  * Claude CLI Runner 싱글톤 인스턴스
  */
 export const claudeCli = new ClaudeCliRunner();
+

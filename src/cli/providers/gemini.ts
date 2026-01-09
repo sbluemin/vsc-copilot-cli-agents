@@ -2,9 +2,13 @@
  * Gemini CLI Provider
  */
 
+import { exec } from 'child_process';
+import { promisify } from 'util';
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../runners';
-import { GeminiStreamMessage, StreamContent } from '../types';
+import { GeminiStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
+
+const execAsync = promisify(exec);
 
 export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
@@ -75,9 +79,49 @@ export class GeminiCliRunner extends SpawnCliRunner {
       return { content: null };
     }
   }
+
+  protected async checkInstallation(): Promise<InstallInfo> {
+    try {
+      const whichCmd = process.platform === 'win32' ? 'where' : 'which';
+      const { stdout: pathOutput } = await execAsync(`${whichCmd} gemini`, { timeout: 10000 });
+      const cliPath = pathOutput.trim().split('\n')[0];
+
+      const { stdout: versionOutput } = await execAsync('gemini --version', { timeout: 10000 });
+      const version = versionOutput.trim();
+
+      return {
+        status: 'installed',
+        version,
+        path: cliPath,
+      };
+    } catch {
+      return {
+        status: 'not_installed',
+        error: 'Gemini CLI not found in PATH',
+      };
+    }
+  }
+
+  protected getInstallGuidance(): HealthGuidance {
+    return {
+      title: 'How to Install',
+      steps: [
+        'Visit the official GitHub repository',
+        'Follow the installation instructions for your platform',
+        'After installation, run `@gemini /doctor` again to verify',
+      ],
+      links: [
+        {
+          label: 'Gemini CLI GitHub',
+          url: 'https://geminicli.com/',
+        },
+      ],
+    };
+  }
 }
 
 /**
  * Gemini CLI Runner 싱글톤 인스턴스
  */
 export const geminiCli = new GeminiCliRunner();
+

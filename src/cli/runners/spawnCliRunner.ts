@@ -6,7 +6,17 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
-import { CliOptions, CliResult, StreamCallback, StreamContent, CliRunner } from '../types';
+import {
+  CliOptions,
+  CliResult,
+  StreamCallback,
+  StreamContent,
+  CliRunner,
+  DoctorResult,
+  InstallInfo,
+  HealthGuidance,
+  CliHealthStatus,
+} from '../types';
 
 /**
  * 스트리밍 파싱 결과 (세션 ID 포함)
@@ -65,6 +75,20 @@ export abstract class SpawnCliRunner implements CliRunner {
    * @returns 파싱 결과 (콘텐츠 및 세션 ID)
    */
   protected abstract parseLineWithSession(line: string): ParseResult;
+
+  // ===== Doctor 관련 추상 메서드 =====
+
+  /**
+   * CLI 설치 상태 확인
+   * @returns 설치 정보
+   */
+  protected abstract checkInstallation(): Promise<InstallInfo>;
+
+  /**
+   * 설치 가이드 반환
+   * @returns 설치 가이드
+   */
+  protected abstract getInstallGuidance(): HealthGuidance;
 
   /**
    * ANSI escape 코드 제거
@@ -262,5 +286,24 @@ export abstract class SpawnCliRunner implements CliRunner {
       // 이벤트 핸들러 등록
       this.registerProcessHandlers(childProcess, context);
     });
+  }
+
+  /**
+   * CLI 상태 검증 실행
+   * @returns Doctor 검증 결과
+   */
+  async doctor(): Promise<DoctorResult> {
+    const install = await this.checkInstallation();
+
+    const status: CliHealthStatus = {
+      cli: this.name,
+      install,
+      checkedAt: new Date(),
+    };
+
+    return {
+      status,
+      installGuidance: this.getInstallGuidance(),
+    };
   }
 }

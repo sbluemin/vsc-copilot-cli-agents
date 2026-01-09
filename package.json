@@ -26,14 +26,26 @@
         "fullName": "Gemini",
         "name": "gemini",
         "description": "Google Gemini AI Assistant",
-        "isSticky": true
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "doctor",
+            "description": "Check Gemini CLI installation status"
+          }
+        ]
       },
       {
         "id": "copilot-cli-agents.claude",
         "fullName": "Claude",
         "name": "claude",
         "description": "Anthropic Claude AI Assistant",
-        "isSticky": true
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "doctor",
+            "description": "Check Claude CLI installation status"
+          }
+        ]
       }
     ],
     "commands": [
