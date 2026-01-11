@@ -3,34 +3,20 @@
  */
 
 import * as vscode from 'vscode';
-import { geminiCli, claudeCli } from '../cli';
-import { SessionStore } from '../session';
+import { SessionStore } from '../cli/session';
 import { ParticipantConfig } from './types';
 import { createParticipantHandler } from './handler';
+import { createClaudeParticipant } from './feature/claude';
+import { createGeminiParticipant } from './feature/gemini';
 
-/**
- * Participant 설정 생성 (세션 저장소 포함)
- */
-function createParticipantConfigs(sessionStore: SessionStore): ParticipantConfig[] {
-  return [
-    {
-      id: 'copilot-cli-agents.gemini',
-      name: 'Gemini',
-      description: 'Google Gemini AI Assistant',
-      cliRunner: geminiCli,
-      cliType: 'gemini',
-      sessionStore,
-    },
-    {
-      id: 'copilot-cli-agents.claude',
-      name: 'Claude',
-      description: 'Anthropic Claude AI Assistant',
-      cliRunner: claudeCli,
-      cliType: 'claude',
-      sessionStore,
-    },
-  ];
-}
+/** Participant 생성 함수 타입 */
+type ParticipantFactory = (sessionStore: SessionStore) => ParticipantConfig;
+
+/** 등록할 Participant 생성 함수 목록 */
+const participantFactories: ParticipantFactory[] = [
+  createGeminiParticipant,
+  createClaudeParticipant,
+];
 
 /**
  * 단일 Chat Participant 등록
@@ -67,9 +53,8 @@ export function registerAllParticipants(context: vscode.ExtensionContext): void 
   sessionStore.cleanup();
 
   // Participant 설정 생성 및 등록
-  const participants = createParticipantConfigs(sessionStore);
-
-  for (const config of participants) {
+  for (const factory of participantFactories) {
+    const config = factory(sessionStore);
     const disposable = registerParticipant(context, config);
     context.subscriptions.push(disposable);
     console.log(`[copilot-cli-agents] Registered chat participant: @${config.cliRunner.name}`);

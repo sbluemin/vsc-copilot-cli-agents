@@ -4,7 +4,7 @@
 
 import * as vscode from 'vscode';
 import { CommandConfig } from './types';
-import { scaffoldLlmCommand } from './cmd-scaffold';
+import { scaffoldLlmCommand } from './feature/scaffold';
 
 /**
  * 등록할 커맨드 목록

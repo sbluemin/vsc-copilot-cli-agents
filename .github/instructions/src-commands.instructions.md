@@ -14,7 +14,8 @@ src/commands/
 ├── index.ts          # Module entry point (exports only)
 ├── types.ts          # Type definitions
 ├── register.ts       # Command registration module
-└── cmd-*.ts          # Individual command implementations (e.g., cmd-scaffold.ts)
+└── feature/          # Individual command implementations
+    └── <name>.ts     # Command implementation (e.g., scaffold.ts)
 ```
 
 ## File Responsibilities
@@ -32,8 +33,8 @@ export interface CommandConfig {
 }
 ```
 
-### 2. cmd-*.ts (Individual Command Implementation)
-- Command files use the `cmd-` prefix (e.g., `cmd-scaffold.ts`).
+### 2. feature/<name>.ts (Individual Command Implementation)
+- Command files are placed in the `feature/` directory with descriptive names (e.g., `scaffold.ts`).
 - Each file is responsible for a single command implementation.
 - Export a `CommandConfig` object at the end of the file.
 - Helper functions are defined internally and not exposed externally.
@@ -41,7 +42,7 @@ export interface CommandConfig {
 **Structure Example:**
 ```typescript
 import * as vscode from 'vscode';
-import { CommandConfig } from './types';
+import { CommandConfig } from '../types';
 
 // Helper functions (not exposed externally)
 function helperFunction(): void {
@@ -63,13 +64,13 @@ export const myCommand: CommandConfig = {
 ### 3. register.ts
 - Central module that registers all commands.
 - Exports `registerAllCommands` function to be called from extension.ts.
-- Imports `CommandConfig` objects exported from each cmd-*.ts file and manages them in an array.
+- Imports `CommandConfig` objects exported from each feature/*.ts file and manages them in an array.
 
 **Structure:**
 ```typescript
 import * as vscode from 'vscode';
 import { CommandConfig } from './types';
-import { myCommand } from './cmd-my-command';
+import { myCommand } from './feature/my-command';
 
 const commands: CommandConfig[] = [myCommand];
 
@@ -101,7 +102,7 @@ export { registerAllCommands } from './register';
 ## Command Implementation Guidelines
 
 ### 1. Naming Conventions
-- Command file: `cmd-<action-name>.ts` (kebab-case)
+- Command file: `feature/<action-name>.ts` (kebab-case)
 - CommandConfig object: `<actionName>Command` (camelCase)
 - Handler function: `handle<ActionName>` (PascalCase)
 
@@ -136,20 +137,14 @@ export { registerAllCommands } from './register';
    }
    ```
 
-2. **Create cmd-*.ts file**
+2. **Create feature/<name>.ts file**
    - Implement helper functions and handler function
    - Export `CommandConfig` object
 
 3. **Register command in register.ts**
-   - Add import
+   - Add import from `./feature/<name>`
    - Add to `commands` array
 
 4. **Test**
    - Run Extension Development Host with F5
    - Test command from Command Palette
-
-## Notes
-
-- This pattern is similar to the `src/participants` folder structure.
-- Maintains a scalable and maintainable structure.
-- Each command should be independently developable and testable.

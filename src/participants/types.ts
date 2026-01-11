@@ -3,14 +3,14 @@
  */
 
 import * as vscode from 'vscode';
-import { CliRunner } from '../cli';
-import { SessionStore, CliType } from '../session';
+import type { CliRunner } from '../cli';
+import type { SessionStore, CliType } from '../cli/session';
 
 /**
  * Chat Participant 설정
  */
 export interface ParticipantConfig {
-  /** Participant ID */
+  /** Participant ID (package.json에 정의된 것과 일치해야 함) */
   id: string;
   /** 표시 이름 */
   name: string;

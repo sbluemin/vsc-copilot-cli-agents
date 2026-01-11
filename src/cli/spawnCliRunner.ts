@@ -16,7 +16,7 @@ import {
   InstallInfo,
   HealthGuidance,
   CliHealthStatus,
-} from '../types';
+} from './types';
 
 /**
  * 스트리밍 파싱 결과 (세션 ID 포함)

@@ -1,11 +1,13 @@
 /**
- * Claude CLI Provider
+ * Claude CLI Participant
  */
 
 import * as vscode from 'vscode';
-import { SpawnCliRunner, ParseResult } from '../runners';
-import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../types';
-import { executeCommand } from '../utils/commandExecutor';
+import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
+import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
+import { executeCommand } from '../../cli/utils/commandExecutor';
+import { SessionStore } from '../../cli/session';
+import { ParticipantConfig } from '../types';
 
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
@@ -149,5 +151,21 @@ export class ClaudeCliRunner extends SpawnCliRunner {
 /**
  * Claude CLI Runner 싱글톤 인스턴스
  */
-export const claudeCli = new ClaudeCliRunner();
+const claudeCli = new ClaudeCliRunner();
+
+/**
+ * Claude Participant 설정 생성
+ * @param sessionStore - 세션 저장소 (register에서 주입)
+ * @returns Participant 설정
+ */
+export function createClaudeParticipant(sessionStore: SessionStore): ParticipantConfig {
+  return {
+    id: 'copilot-cli-agents.claude',
+    name: 'Claude',
+    description: 'Anthropic Claude AI Assistant',
+    cliRunner: claudeCli,
+    cliType: 'claude',
+    sessionStore,
+  };
+}
 
