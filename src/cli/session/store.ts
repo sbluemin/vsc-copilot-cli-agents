@@ -79,6 +79,7 @@ export class SessionStore {
    * @returns CLI 세션 ID 또는 undefined
    */
   getCliSessionId(copilotSessionId: string, cliType: CliType): string | undefined {
+    this.data = this.load(); // Refresh from file
     const mapping = this.data.sessions[copilotSessionId];
     return mapping?.[cliType]?.cliSessionId;
   }
@@ -90,6 +91,7 @@ export class SessionStore {
    * @returns CLI 세션 정보 또는 undefined
    */
   getCliSession(copilotSessionId: string, cliType: CliType): CliSessionInfo | undefined {
+    this.data = this.load(); // Refresh from file
     return this.data.sessions[copilotSessionId]?.[cliType];
   }
 
@@ -100,6 +102,7 @@ export class SessionStore {
    * @param cliSessionId - CLI 세션 ID
    */
   setCliSessionId(copilotSessionId: string, cliType: CliType, cliSessionId: string): void {
+    this.data = this.load(); // Refresh from file before update
     const now = new Date().toISOString();
 
     // 기존 매핑이 없으면 생성
@@ -124,6 +127,7 @@ export class SessionStore {
    * @returns 세션 매핑 또는 undefined
    */
   getCopilotSession(copilotSessionId: string): CopilotSessionMapping | undefined {
+    this.data = this.load(); // Refresh from file
     return this.data.sessions[copilotSessionId];
   }
 
@@ -132,6 +136,7 @@ export class SessionStore {
    * @param copilotSessionId - VSCode Copilot 세션 ID
    */
   deleteCopilotSession(copilotSessionId: string): void {
+    this.data = this.load(); // Refresh from file before update
     delete this.data.sessions[copilotSessionId];
     this.save();
   }
@@ -141,6 +146,7 @@ export class SessionStore {
    * @param maxAgeMs - 최대 보관 기간 (밀리초, 기본값: 7일)
    */
   cleanup(maxAgeMs: number = 7 * 24 * 60 * 60 * 1000): void {
+    this.data = this.load(); // Refresh from file before update
     const now = Date.now();
     let changed = false;
 
@@ -176,6 +182,7 @@ export class SessionStore {
    * 전체 세션 수 조회
    */
   get sessionCount(): number {
+    this.data = this.load(); // Refresh from file
     return Object.keys(this.data.sessions).length;
   }
 }
