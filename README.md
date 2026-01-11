@@ -4,7 +4,7 @@ Copilot extension for integrating multiple Code Agent CLIs directly into VS Code
 
 ## Introduction
 
-![Demo](./.github/docs/demo.gif)
+![Introduction](./.github/docs/introduction.gif)
 
 ## Motivation
 
@@ -28,25 +28,21 @@ This extension adds the following chat participants to GitHub Copilot:
 Each chat participant supports the following slash commands:
 
 - **/doctor**: Check CLI installation status and verify it's working properly
-  - Validates CLI installation (version, path)
-  - Provides installation guide if CLI is not found
+![Doctor](./.github/docs/doctor.gif)
 
 ### Commands
 
 This extension provides the following commands:
 
 - **Scaffold Code Agents**: Creates the recommended project structure for Code Agent integration
-  - Command ID: `copilot-cli-agents.scaffold-llm`
-  - Creates `.github/copilot-instructions.md` and related directories (`agents`, `prompts`, `instructions`)
-  - Sets up `GEMINI.md` and `CLAUDE.md` symlinks at the project root for agent-specific instructions
+![Scaffold](./.github/docs/scaffold.gif)
 
 ### Configurations
 
 This extension provides the following configurations:
 
 - **Model Selection**: Select the underlying model for each agent
-  - Gemini: `CCA.gemini.model` (e.g., `gemini-3-flash-preview`)
-  - Claude: `CCA.claude.model` (e.g., `haiku`)
+![Models](./.github/docs/models.gif)
 
 ## Usage
 
