@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CommandConfig } from './types';
+import { CommandConfig } from '../types';
 
 /**
  * .github 디렉토리 하위에 생성할 디렉토리 목록

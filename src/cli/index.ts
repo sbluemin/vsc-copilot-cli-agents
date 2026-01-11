@@ -3,6 +3,6 @@
  */
 
 export * from './types';
-export * from './runners';
-export * from './providers';
+export * from './spawnCliRunner';
+export * from './session';
 export * from './utils';
