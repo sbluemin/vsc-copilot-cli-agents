@@ -250,25 +250,34 @@ async function handleScaffoldLlm(): Promise<void> {
 
   // 3. 스캐폴딩 수행
 
-  // 3.1. AGENTS.md 파일 생성 (프로젝트 루트)
-  const agentsPath = path.join(selectedDir, 'AGENTS.md');
-  ensureFile(agentsPath, getDefaultAgentsContent(), selectedDir, result);
-
-  // 3.2. .github 디렉토리 및 하위 디렉토리 생성
+  // 3.1. .github 디렉토리 및 하위 디렉토리 생성
   const githubDir = path.join(selectedDir, '.github');
   ensureDirectory(githubDir, selectedDir, result);
 
   for (const subDir of GITHUB_SUBDIRECTORIES) {
     const subDirPath = path.join(githubDir, subDir);
-    const gitkeepPath = path.join(subDirPath, '.gitkeep');
+    const alreadyExists = directoryExists(subDirPath);
 
     ensureDirectory(subDirPath, selectedDir, result);
-    ensureFile(gitkeepPath, '', selectedDir, result);
+
+    // 디렉토리가 새로 생성된 경우에만 .gitkeep 파일 생성
+    if (!alreadyExists) {
+      const gitkeepPath = path.join(subDirPath, '.gitkeep');
+      ensureFile(gitkeepPath, '', selectedDir, result);
+    }
   }
 
-  // 3.3. CLAUDE.md → AGENTS.md 심볼릭 링크 생성
+  // 3.2. .github/copilot-instructions.md 파일 생성 (원본 파일)
+  const copilotInstructionsPath = path.join(githubDir, 'copilot-instructions.md');
+  ensureFile(copilotInstructionsPath, getDefaultAgentsContent(), selectedDir, result);
+
+  // 3.3. AGENTS.md → .github/copilot-instructions.md 심볼릭 링크 생성
+  const agentsLinkPath = path.join(selectedDir, 'AGENTS.md');
+  ensureSymlink(copilotInstructionsPath, agentsLinkPath, selectedDir, result);
+
+  // 3.4. CLAUDE.md → .github/copilot-instructions.md 심볼릭 링크 생성
   const claudeLinkPath = path.join(selectedDir, 'CLAUDE.md');
-  ensureSymlink(agentsPath, claudeLinkPath, selectedDir, result);
+  ensureSymlink(copilotInstructionsPath, claudeLinkPath, selectedDir, result);
 
   // 결과 표시
   showScaffoldResult(result);
