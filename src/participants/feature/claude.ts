@@ -13,18 +13,23 @@ export class ClaudeCliRunner extends SpawnCliRunner {
 
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
     const config = vscode.workspace.getConfiguration('CCA');
-    const model = config.get<string>('claude.model');
-    const workspaceFolders = vscode.workspace.workspaceFolders;
+    const command = 'claude';
+    const args = ['--output-format', 'stream-json', '--verbose'];
 
-    const args = ['--allowed-tools', 'WebSearch', '--output-format', 'stream-json', '--verbose'];
+    const allowedTools = ['WebSearch'];
+    if (allowedTools.length > 0) {
+      args.push('--allowed-tools', allowedTools.join(','));
+    }
 
     // 다중 workspace 디렉토리 추가
+    const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length > 0) {
       for (const folder of workspaceFolders) {
         args.push('--add-dir', folder.uri.fsPath);
       }
     }
 
+    const model = config.get<string>('claude.model');
     if (model) {
       args.push('--model', model);
     }
@@ -35,7 +40,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     }
 
     return {
-      command: 'claude',
+      command,
       args,
     };
   }
