@@ -4,7 +4,6 @@
 
 import * as vscode from 'vscode';
 import type { CliRunner } from '../cli';
-import type { SessionStore, CliType } from '../cli/session';
 
 /**
  * Chat Participant 설정
@@ -18,10 +17,6 @@ export interface ParticipantConfig {
   description: string;
   /** CLI Runner */
   cliRunner: CliRunner;
-  /** CLI 타입 (세션 관리용) */
-  cliType: CliType;
-  /** 세션 저장소 */
-  sessionStore: SessionStore;
 }
 
 /**

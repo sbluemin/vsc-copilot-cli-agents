@@ -4,5 +4,4 @@
 
 export * from './types';
 export * from './spawnCliRunner';
-export * from './session';
 export * from './utils';

@@ -6,7 +6,6 @@ import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
 import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
 import { executeCommand } from '../../cli/utils/commandExecutor';
-import { SessionStore } from '../../cli/session';
 import { ParticipantConfig } from '../types';
 
 export class ClaudeCliRunner extends SpawnCliRunner {
@@ -155,17 +154,14 @@ const claudeCli = new ClaudeCliRunner();
 
 /**
  * Claude Participant 설정 생성
- * @param sessionStore - 세션 저장소 (register에서 주입)
  * @returns Participant 설정
  */
-export function createClaudeParticipant(sessionStore: SessionStore): ParticipantConfig {
+export function createClaudeParticipant(): ParticipantConfig {
   return {
     id: 'copilot-cli-agents.claude',
     name: 'Claude',
     description: 'Anthropic Claude AI Assistant',
     cliRunner: claudeCli,
-    cliType: 'claude',
-    sessionStore,
   };
 }
 

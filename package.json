@@ -31,6 +31,10 @@
           {
             "name": "doctor",
             "description": "Check Gemini CLI installation status"
+          },
+          {
+            "name": "session",
+            "description": "Show current chat session ID"
           }
         ]
       },
@@ -44,6 +48,10 @@
           {
             "name": "doctor",
             "description": "Check Claude CLI installation status"
+          },
+          {
+            "name": "session",
+            "description": "Show current chat session ID"
           }
         ]
       }

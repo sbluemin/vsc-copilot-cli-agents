@@ -30,6 +30,9 @@ Each chat participant supports the following slash commands:
 - **/doctor**: Check CLI installation status and verify it's working properly
 ![Doctor](./.github/docs/doctor.gif)
 
+- **/session**: Display the current chat session ID for resuming conversations
+![Session](./.github/docs/session.gif)
+
 ### Commands
 
 This extension provides the following commands:
@@ -54,14 +57,11 @@ This extension provides the following configurations:
 
 ## Important Notes
 
-1. When the Participant is first called, a `{workspaceFolder}/.github/copilot-cli-agents.json` file is created.
-   > **Note**: This is used to restore the chat session between Copilot and the CLI. It is safe to add it to `.gitignore`.
-
-2. Even if you use GitHub Copilot's 'Add Context' feature, it is not attached.
+1. Even if you use GitHub Copilot's 'Add Context' feature, it is not attached.
    > **Note**: This is intended to use the CLI cleanly without polluting its own features. If you wish to perform advanced tasks, please use the CLI directly after restoring the session.
 
-3. The working directory for all CLIs is the open path in VS Code.
+2. The working directory for all CLIs is the open path in VS Code.
    > **Note**: This allows you to purely utilize the instruction files and capabilities within the project.
 
-4. The only available tool for the CLI is the 'Web Search' tool.
+3. The only available tool for the CLI is the 'Web Search' tool.
    > **Note**: This project is intended to utilize other CLIs as 'auxiliary tools' using GitHub Copilot.
