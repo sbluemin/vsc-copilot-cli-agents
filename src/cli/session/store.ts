@@ -17,10 +17,12 @@ const STORE_VERSION = 1;
 
 /**
  * 세션 저장소 클래스
+ *
+ * 참고: 인메모리 캐싱을 사용하지 않고 항상 파일에서 읽음
+ * 파일 삭제 시 즉시 반영되도록 하기 위함
  */
 export class SessionStore {
   private readonly filePath: string;
-  private data: SessionStoreData;
 
   /**
    * SessionStore 생성자
@@ -28,11 +30,10 @@ export class SessionStore {
    */
   constructor(workspaceRoot: string) {
     this.filePath = path.join(workspaceRoot, SESSION_FILE_NAME);
-    this.data = this.load();
   }
 
   /**
-   * 세션 데이터 로드
+   * 세션 데이터 로드 (항상 파일에서 읽음)
    */
   private load(): SessionStoreData {
     try {
@@ -57,8 +58,9 @@ export class SessionStore {
 
   /**
    * 세션 데이터 저장
+   * @param data - 저장할 세션 데이터
    */
-  private save(): void {
+  private save(data: SessionStoreData): void {
     try {
       // .github 디렉토리 확인 및 생성
       const dir = path.dirname(this.filePath);
@@ -66,7 +68,7 @@ export class SessionStore {
         fs.mkdirSync(dir, { recursive: true });
       }
 
-      fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2), 'utf-8');
+      fs.writeFileSync(this.filePath, JSON.stringify(data, null, 2), 'utf-8');
     } catch (error) {
       console.error('[SessionStore] Failed to save session data:', error);
     }
@@ -79,7 +81,8 @@ export class SessionStore {
    * @returns CLI 세션 ID 또는 undefined
    */
   getCliSessionId(copilotSessionId: string, cliType: CliType): string | undefined {
-    const mapping = this.data.sessions[copilotSessionId];
+    const data = this.load();
+    const mapping = data.sessions[copilotSessionId];
     return mapping?.[cliType]?.cliSessionId;
   }
 
@@ -90,7 +93,8 @@ export class SessionStore {
    * @returns CLI 세션 정보 또는 undefined
    */
   getCliSession(copilotSessionId: string, cliType: CliType): CliSessionInfo | undefined {
-    return this.data.sessions[copilotSessionId]?.[cliType];
+    const data = this.load();
+    return data.sessions[copilotSessionId]?.[cliType];
   }
 
   /**
@@ -100,22 +104,23 @@ export class SessionStore {
    * @param cliSessionId - CLI 세션 ID
    */
   setCliSessionId(copilotSessionId: string, cliType: CliType, cliSessionId: string): void {
+    const data = this.load();
     const now = new Date().toISOString();
 
     // 기존 매핑이 없으면 생성
-    if (!this.data.sessions[copilotSessionId]) {
-      this.data.sessions[copilotSessionId] = {};
+    if (!data.sessions[copilotSessionId]) {
+      data.sessions[copilotSessionId] = {};
     }
 
-    const existingSession = this.data.sessions[copilotSessionId][cliType];
+    const existingSession = data.sessions[copilotSessionId][cliType];
 
-    this.data.sessions[copilotSessionId][cliType] = {
+    data.sessions[copilotSessionId][cliType] = {
       cliSessionId,
       createdAt: existingSession?.createdAt || now,
       lastUsedAt: now,
     };
 
-    this.save();
+    this.save(data);
   }
 
   /**
@@ -124,7 +129,8 @@ export class SessionStore {
    * @returns 세션 매핑 또는 undefined
    */
   getCopilotSession(copilotSessionId: string): CopilotSessionMapping | undefined {
-    return this.data.sessions[copilotSessionId];
+    const data = this.load();
+    return data.sessions[copilotSessionId];
   }
 
   /**
@@ -132,8 +138,9 @@ export class SessionStore {
    * @param copilotSessionId - VSCode Copilot 세션 ID
    */
   deleteCopilotSession(copilotSessionId: string): void {
-    delete this.data.sessions[copilotSessionId];
-    this.save();
+    const data = this.load();
+    delete data.sessions[copilotSessionId];
+    this.save(data);
   }
 
   /**
@@ -141,10 +148,11 @@ export class SessionStore {
    * @param maxAgeMs - 최대 보관 기간 (밀리초, 기본값: 7일)
    */
   cleanup(maxAgeMs: number = 7 * 24 * 60 * 60 * 1000): void {
+    const data = this.load();
     const now = Date.now();
     let changed = false;
 
-    for (const [copilotSessionId, mapping] of Object.entries(this.data.sessions)) {
+    for (const [copilotSessionId, mapping] of Object.entries(data.sessions)) {
       let hasActiveSession = false;
 
       for (const cliType of ['gemini', 'claude'] as CliType[]) {
@@ -162,13 +170,13 @@ export class SessionStore {
 
       // 모든 CLI 세션이 삭제되면 Copilot 세션도 삭제
       if (!hasActiveSession) {
-        delete this.data.sessions[copilotSessionId];
+        delete data.sessions[copilotSessionId];
         changed = true;
       }
     }
 
     if (changed) {
-      this.save();
+      this.save(data);
     }
   }
 
@@ -176,6 +184,7 @@ export class SessionStore {
    * 전체 세션 수 조회
    */
   get sessionCount(): number {
-    return Object.keys(this.data.sessions).length;
+    const data = this.load();
+    return Object.keys(data.sessions).length;
   }
 }
