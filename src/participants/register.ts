@@ -3,14 +3,13 @@
  */
 
 import * as vscode from 'vscode';
-import { SessionStore } from '../cli/session';
 import { ParticipantConfig } from './types';
 import { createParticipantHandler } from './handler';
 import { createClaudeParticipant } from './feature/claude';
 import { createGeminiParticipant } from './feature/gemini';
 
 /** Participant 생성 함수 타입 */
-type ParticipantFactory = (sessionStore: SessionStore) => ParticipantConfig;
+type ParticipantFactory = () => ParticipantConfig;
 
 /** 등록할 Participant 생성 함수 목록 */
 const participantFactories: ParticipantFactory[] = [
@@ -39,26 +38,11 @@ function registerParticipant(
  * @param context - VS Code Extension Context
  */
 export function registerAllParticipants(context: vscode.ExtensionContext): void {
-  // 워크스페이스 루트 경로 확인
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-  if (!workspaceRoot) {
-    console.warn('[copilot-cli-agents] No workspace folder found, session persistence disabled');
-    return;
-  }
-
-  // 세션 저장소 생성
-  const sessionStore = new SessionStore(workspaceRoot);
-
-  // 오래된 세션 정리 (7일 이상)
-  sessionStore.cleanup();
-
   // Participant 설정 생성 및 등록
   for (const factory of participantFactories) {
-    const config = factory(sessionStore);
+    const config = factory();
     const disposable = registerParticipant(context, config);
     context.subscriptions.push(disposable);
     console.log(`[copilot-cli-agents] Registered chat participant: @${config.cliRunner.name}`);
   }
-
-  console.log(`[copilot-cli-agents] Session store initialized with ${sessionStore.sessionCount} existing sessions`);
 }

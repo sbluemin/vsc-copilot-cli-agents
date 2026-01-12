@@ -3,38 +3,50 @@
  */
 
 import * as vscode from 'vscode';
-import * as crypto from 'crypto';
 import { StreamContent } from '../cli/types';
 import { formatHealthReport } from '../cli/utils';
 import { ParticipantConfig } from './types';
 
 /**
- * Copilot 대화 세션 ID 생성
- *
- * ChatContext.history를 기반으로 고유한 세션 ID를 생성합니다.
- * 첫 요청의 프롬프트를 해시하여 동일한 대화 세션을 식별합니다.
- *
- * @param context - Chat Context
- * @param currentPrompt - 현재 프롬프트 (히스토리가 없는 경우 사용)
- * @returns 세션 ID (UUID 형태)
+ * 세션 ID 마커 패턴: [](cca:sessionId)
+ * 빈 링크 형태로 저장하여 사용자에게 보이지 않음
  */
-function generateCopilotSessionId(
-  context: vscode.ChatContext,
-  currentPrompt: string
-): string {
-  // 히스토리에서 첫 번째 요청 턴 찾기
-  const firstRequest = context.history.find(
-    (turn) => turn instanceof vscode.ChatRequestTurn
-  ) as vscode.ChatRequestTurn | undefined;
+const SESSION_MARKER_PATTERN = /\[\]\(cca:([^)]+)\)/;
 
-  // 첫 요청의 프롬프트 또는 현재 프롬프트 사용
-  const baseText = firstRequest?.prompt || currentPrompt;
-  
-  // 해시 생성 (MD5로 충분, 보안 목적 아님)
-  const hash = crypto.createHash('md5').update(baseText).digest('hex');
-  
-  // UUID 형태로 변환
-  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+/**
+ * Chat History 기반 세션 관리자
+ * context.history에서 세션 ID를 검색하고 저장하는 유틸리티
+ */
+class ChatSessionManager {
+  /**
+   * history에서 기존 세션 ID 검색
+   * @param history - Chat history
+   * @returns 세션 ID 또는 undefined
+   */
+  static findSessionId(history: ReadonlyArray<vscode.ChatRequestTurn | vscode.ChatResponseTurn>): string | undefined {
+    for (const turn of history) {
+      if (turn instanceof vscode.ChatResponseTurn) {
+        for (const part of turn.response) {
+          if (part instanceof vscode.ChatResponseMarkdownPart) {
+            const match = part.value.value.match(SESSION_MARKER_PATTERN);
+            if (match) {
+              return match[1];
+            }
+          }
+        }
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * 세션 ID를 스트림에 마커로 저장
+   * @param stream - Chat response stream
+   * @param sessionId - 저장할 세션 ID
+   */
+  static saveSessionId(stream: vscode.ChatResponseStream, sessionId: string): void {
+    stream.markdown(`[](cca:${sessionId})`);
+  }
 }
 
 /**
@@ -72,7 +84,7 @@ export function createParticipantHandler(
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken
   ): Promise<void> => {
-    const { cliRunner, name, cliType, sessionStore } = config;
+    const { cliRunner, name } = config;
 
     // /doctor 커맨드 처리
     if (request.command === 'doctor') {
@@ -88,6 +100,21 @@ export function createParticipantHandler(
       return;
     }
 
+    // /session 커맨드 처리
+    if (request.command === 'session') {
+      const sessionId = ChatSessionManager.findSessionId(context.history);
+      if (sessionId) {
+        stream.markdown(`📍 **Current Session**\n\n`);
+        stream.markdown(`- **CLI**: ${name}\n`);
+        stream.markdown(`- **Session ID**: \`${sessionId}\`\n\n`);
+        stream.markdown(`> This session can be resumed using the CLI directly with:\n> \`\`\`\n> ${cliRunner.name} --resume ${sessionId}\n> \`\`\``);
+      } else {
+        stream.markdown(`ℹ️ **No Active Session**\n\n`);
+        stream.markdown(`Start a conversation with **@${cliRunner.name}** to create a new session.`);
+      }
+      return;
+    }
+
     // 프롬프트가 비어있는 경우
     if (!request.prompt.trim()) {
       stream.markdown(`Please enter a question for **${name}**.`);
@@ -95,15 +122,8 @@ export function createParticipantHandler(
     }
 
     try {
-      // Copilot 세션 ID 생성
-      const copilotSessionId = generateCopilotSessionId(context, request.prompt);
-
-      // 기존 CLI 세션 ID 조회
-      const existingCliSessionId = sessionStore.getCliSessionId(copilotSessionId, cliType);
-
-      if (existingCliSessionId) {
-        stream.progress(`🔄 Resuming session: ${existingCliSessionId.slice(0, 8)}...`);
-      }
+      // 기존 세션 ID 검색
+      const existingSessionId = ChatSessionManager.findSessionId(context.history);
 
       // AbortController 생성 (취소 토큰 연동)
       const abortController = new AbortController();
@@ -115,18 +135,18 @@ export function createParticipantHandler(
           prompt: request.prompt,
           cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
           abortSignal: abortController.signal,
-          resumeSessionId: existingCliSessionId,
+          resumeSessionId: existingSessionId,
         },
         (content) => handleStreamContent(stream, content)
       );
 
+      // 새 세션 ID가 있고 기존 세션이 없을 경우, 다음 대화에서 찾을 수 있도록 마커 삽입
+      if (result.sessionId && !existingSessionId) {
+        ChatSessionManager.saveSessionId(stream, result.sessionId);
+      }
+
       // 이벤트 리스너 정리
       cancelDisposable.dispose();
-
-      // CLI 세션 ID 저장 (새로 받은 경우)
-      if (result.sessionId) {
-        sessionStore.setCliSessionId(copilotSessionId, cliType, result.sessionId);
-      }
 
       if (!result.success && result.error) {
         stream.markdown(`\n\n---\n⚠️ **Error:** ${result.error}`);

@@ -6,7 +6,6 @@ import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
 import { GeminiStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
 import { executeCommand } from '../../cli/utils/commandExecutor';
-import { SessionStore } from '../../cli/session';
 import { ParticipantConfig } from '../types';
 
 export class GeminiCliRunner extends SpawnCliRunner {
@@ -148,17 +147,14 @@ const geminiCli = new GeminiCliRunner();
 
 /**
  * Gemini Participant 설정 생성
- * @param sessionStore - 세션 저장소 (register에서 주입)
  * @returns Participant 설정
  */
-export function createGeminiParticipant(sessionStore: SessionStore): ParticipantConfig {
+export function createGeminiParticipant(): ParticipantConfig {
   return {
     id: 'copilot-cli-agents.gemini',
     name: 'Gemini',
     description: 'Google Gemini AI Assistant',
     cliRunner: geminiCli,
-    cliType: 'gemini',
-    sessionStore,
   };
 }
 
