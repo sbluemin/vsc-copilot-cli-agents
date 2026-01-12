@@ -5,6 +5,7 @@
  * shell: true 옵션으로 Windows의 .cmd 래퍼와 Unix 셸 스크립트를 모두 지원합니다.
  */
 
+import * as vscode from 'vscode';
 import { spawn, ChildProcess } from 'child_process';
 import {
   CliOptions,
@@ -252,7 +253,7 @@ export abstract class SpawnCliRunner implements CliRunner {
    * CLI 실행 (스트리밍)
    */
   async run(options: CliOptions, onContent: StreamCallback): Promise<CliResult> {
-    const { prompt, cwd, abortSignal, resumeSessionId } = options;
+    const { prompt, abortSignal, resumeSessionId } = options;
     const { command, args } = this.buildCliOptions(resumeSessionId);
     const promptArgs = this.buildPromptArgument(prompt);
 
@@ -264,7 +265,7 @@ export abstract class SpawnCliRunner implements CliRunner {
 
     return new Promise((resolve) => {
       const childProcess: ChildProcess = spawn(command, allArgs, {
-        cwd: cwd || process.cwd(),
+        cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
         env: process.env,
         shell: true,
         stdio: ['ignore', 'pipe', 'pipe'],

@@ -133,7 +133,6 @@ export function createParticipantHandler(
       const result = await cliRunner.run(
         {
           prompt: request.prompt,
-          cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
           abortSignal: abortController.signal,
           resumeSessionId: existingSessionId,
         },

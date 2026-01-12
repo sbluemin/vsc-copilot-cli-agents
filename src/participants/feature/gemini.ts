@@ -14,8 +14,16 @@ export class GeminiCliRunner extends SpawnCliRunner {
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
     const config = vscode.workspace.getConfiguration('CCA');
     const model = config.get<string>('gemini.model');
+    const workspaceFolders = vscode.workspace.workspaceFolders;
 
     const args = ['--allowed-tools', 'google_web_search', '--output-format', 'stream-json'];
+
+    // 다중 workspace 디렉토리 추가
+    if (workspaceFolders && workspaceFolders.length > 0) {
+      for (const folder of workspaceFolders) {
+        args.push('--include-directories', folder.uri.fsPath);
+      }
+    }
 
     if (model) {
       args.push('--model', model);
