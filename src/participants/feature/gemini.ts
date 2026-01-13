@@ -18,9 +18,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
     const args = ['--output-format stream-json'];
 
     const allowedTools = ['glob', 'google_web_search', 'read_file', 'list_directory', 'search_file_content'];
-    if (allowedTools.length > 0) {
-      args.push('--allowed-tools', allowedTools.join(','));
-    }
+    args.push('--allowed-tools', allowedTools.join(','));
 
     // 다중 workspace 디렉토리 추가
     /* #NOT_WORKING: https://github.com/google-gemini/gemini-cli/issues/13669
