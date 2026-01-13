@@ -265,7 +265,7 @@ export abstract class SpawnCliRunner implements CliRunner {
 
     return new Promise((resolve) => {
       const childProcess: ChildProcess = spawn(command, allArgs, {
-        cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+        cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd(),
         env: process.env,
         shell: true,
         stdio: ['ignore', 'pipe', 'pipe'],

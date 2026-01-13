@@ -17,9 +17,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     const args = ['--output-format', 'stream-json', '--verbose'];
 
     const allowedTools = ['WebSearch'];
-    if (allowedTools.length > 0) {
-      args.push('--allowed-tools', allowedTools.join(','));
-    }
+    args.push('--allowed-tools', allowedTools.join(','));
 
     // 다중 workspace 디렉토리 추가
     const workspaceFolders = vscode.workspace.workspaceFolders;

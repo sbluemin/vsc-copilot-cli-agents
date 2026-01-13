@@ -12,10 +12,9 @@ export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
 
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
-
     const config = vscode.workspace.getConfiguration('CCA');
     const command = 'gemini';
-    const args = ['--output-format stream-json'];
+    const args = ['--output-format', 'stream-json'];
 
     const allowedTools = ['glob', 'google_web_search', 'read_file', 'list_directory', 'search_file_content'];
     args.push('--allowed-tools', allowedTools.join(','));
