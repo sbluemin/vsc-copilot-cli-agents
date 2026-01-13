@@ -13,10 +13,25 @@ export class GeminiCliRunner extends SpawnCliRunner {
 
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
     const config = vscode.workspace.getConfiguration('CCA');
+    const command = 'gemini';
+    const args = ['--output-format', 'stream-json'];
+
+    const allowedTools = ['glob', 'google_web_search', 'read_file', 'list_directory', 'search_file_content'];
+    args.push('--allowed-tools', allowedTools.join(','));
+
+    // 다중 workspace 디렉토리 추가
+    /* #NOT_WORKING: https://github.com/google-gemini/gemini-cli/issues/13669
+     * 현재 `비 인터렉티브` 모드에서 해당 옵션이 제대로 동작하지 않음
+     * 이슈가 해결되면 아래 코드를 활성화할 것
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+      for (const folder of workspaceFolders) {
+        args.push('--include-directories', folder.uri.fsPath);
+      }
+    }
+    */
+
     const model = config.get<string>('gemini.model');
-
-    const args = ['--allowed-tools', 'google_web_search', '--output-format', 'stream-json'];
-
     if (model) {
       args.push('--model', model);
     }
@@ -27,7 +42,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
     }
 
     return {
-      command: 'gemini',
+      command,
       args,
     };
   }
