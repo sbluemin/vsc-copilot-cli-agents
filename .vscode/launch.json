@@ -10,6 +10,7 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
+        "--profile=dev-vsc-copilot-cli",
         "${workspaceFolder}/.vscode/extensionDevTestWorkspace"
       ],
       "outFiles": [

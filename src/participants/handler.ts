@@ -115,6 +115,49 @@ export function createParticipantHandler(
       return;
     }
 
+    // /handoff 커맨드 처리: 대화형 CLI 터미널로 전환
+    if (request.command === 'handoff') {
+      const sessionId = ChatSessionManager.findSessionId(context.history);
+      if (!sessionId) {
+        stream.markdown(`❌ **No Active Session**\n\n`);
+        stream.markdown(`You need an active session to hand off to the CLI.\n`);
+        stream.markdown(`Start a conversation with **@${cliRunner.name}** first, then use \`/handoff\`.`);
+        return;
+      }
+
+      try {
+        // 모델 설정 가져오기
+        const ccaConfig = vscode.workspace.getConfiguration('CCA');
+        const model = ccaConfig.get<string>(`${cliRunner.name}.model`);
+
+        // CLI 인자 구성
+        const shellArgs = ['--resume', sessionId];
+        if (model) {
+          shellArgs.push('--model', model);
+        }
+
+        // 에디터 사이드 영역에 터미널 생성 및 CLI 실행
+        const terminal = vscode.window.createTerminal({
+          name: `${name} CLI`,
+          shellPath: cliRunner.name,
+          shellArgs,
+          location: {
+            viewColumn: vscode.ViewColumn.Beside,
+          },
+          iconPath: config.iconPath,
+        });
+        terminal.show();
+
+        stream.markdown(`🚀 **Handoff Successful**\n\n`);
+        stream.markdown(`Interactive ${name} CLI has been opened in a side terminal with session \`${sessionId}\`.\n\n`);
+        stream.markdown(`> You can continue your conversation directly in the terminal.`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        stream.markdown(`❌ **Error during handoff:** ${errorMessage}`);
+      }
+      return;
+    }
+
     // 프롬프트가 비어있는 경우
     if (!request.prompt.trim()) {
       stream.markdown(`Please enter a question for **${name}**.`);

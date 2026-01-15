@@ -17,6 +17,8 @@ export interface ParticipantConfig {
   description: string;
   /** CLI Runner */
   cliRunner: CliRunner;
+  /** 아이콘 경로 (터미널 등에서 사용) */
+  iconPath?: vscode.Uri;
 }
 
 /**
