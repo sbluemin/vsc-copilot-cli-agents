@@ -24,11 +24,15 @@ function registerParticipant(
   context: vscode.ExtensionContext,
   config: ParticipantConfig
 ): vscode.Disposable {
+  // 아이콘 경로 설정
+  const iconPath = vscode.Uri.joinPath(context.extensionUri, 'assets', `${config.cliRunner.name}.svg`);
+  config.iconPath = iconPath;
+
   const handler = createParticipantHandler(config);
   const participant = vscode.chat.createChatParticipant(config.id, handler);
   
-  // 아이콘 설정
-  participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'assets', `${config.cliRunner.name}.svg`);
+  // Chat Participant 아이콘 설정
+  participant.iconPath = iconPath;
 
   return participant;
 }

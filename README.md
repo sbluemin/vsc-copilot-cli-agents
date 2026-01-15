@@ -33,6 +33,9 @@ Each chat participant supports the following slash commands:
 - **/session**: Display the current chat session ID for resuming conversations
 ![Session](./.github/docs/session.gif)
 
+- **/handoff**: Open an interactive CLI terminal with the current session, allowing you to continue the conversation directly in the terminal with full CLI capabilities
+![Handoff](./.github/docs/handoff.gif)
+
 ### Commands
 
 This extension provides the following commands:
@@ -63,5 +66,5 @@ This extension provides the following configurations:
 2. The working directory for all CLIs is the open path in VS Code.
    > **Note**: This allows you to purely utilize the instruction files and capabilities within the project.
 
-3. The only available tool for the CLI is the 'Web Search' tool.
-   > **Note**: This project is intended to utilize other CLIs as 'auxiliary tools' using GitHub Copilot.
+3. Write operation tools are not provided for the CLI.
+   > **Note**: If you need advanced operations (e.g., write operations), use the Handoff feature.

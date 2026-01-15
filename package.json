@@ -35,6 +35,10 @@
           {
             "name": "session",
             "description": "Show current chat session ID"
+          },
+          {
+            "name": "handoff",
+            "description": "Open interactive CLI terminal with current session"
           }
         ]
       },
@@ -52,6 +56,10 @@
           {
             "name": "session",
             "description": "Show current chat session ID"
+          },
+          {
+            "name": "handoff",
+            "description": "Open interactive CLI terminal with current session"
           }
         ]
       }
