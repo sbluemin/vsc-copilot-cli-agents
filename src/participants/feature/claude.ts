@@ -20,14 +20,17 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     const command = 'claude';
     const args = ['--output-format', 'stream-json', '--verbose', '--include-partial-messages'];
 
-    const allowedTools = ['WebSearch'];
-    args.push('--allowed-tools', allowedTools.join(','));
+    // 허용 도구 목록을 설정에서 읽음 (빈 배열이면 인자 생략)
+    const allowedTools = config.get<string[]>('claude.allowedTools', []);
+    if (allowedTools.length > 0) {
+      args.push('--allowed-tools', allowedTools.join(','));
+    }
 
     // 다중 workspace 디렉토리 추가
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length > 0) {
       for (const folder of workspaceFolders) {
-        args.push('--add-dir', folder.uri.fsPath);
+        args.push('--add-dir', folder.uri.path);
       }
     }
 

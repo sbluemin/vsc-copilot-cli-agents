@@ -26,8 +26,11 @@ export class GeminiCliRunner extends SpawnCliRunner {
     const command = 'gemini';
     const args = ['--output-format', 'stream-json'];
 
-    const allowedTools = ['glob', 'google_web_search', 'read_file', 'list_directory', 'search_file_content'];
-    args.push('--allowed-tools', allowedTools.join(','));
+    // 허용 도구 목록을 설정에서 읽음 (빈 배열이면 인자 생략)
+    const allowedTools = config.get<string[]>('gemini.allowedTools', []);
+    if (allowedTools.length > 0) {
+      args.push('--allowed-tools', allowedTools.join(','));
+    }
 
     // 다중 workspace 디렉토리 추가
     /* #NOT_WORKING: https://github.com/google-gemini/gemini-cli/issues/13669
@@ -76,7 +79,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
         <user_request>
         ${prompt}
         </user_request>`;
-        
+
       // 사용 후 초기화
       this.pendingSystemPrompt = undefined;
     }
