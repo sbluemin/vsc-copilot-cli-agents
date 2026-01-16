@@ -130,23 +130,23 @@ export function createParticipantHandler(
         const ccaConfig = vscode.workspace.getConfiguration('CCA');
         const model = ccaConfig.get<string>(`${cliRunner.name}.model`);
 
-        // CLI 인자 구성
-        const shellArgs = ['--resume', sessionId];
+        // CLI 명령어 구성
+        const cliArgs = ['--resume', sessionId];
         if (model) {
-          shellArgs.push('--model', model);
+          cliArgs.push('--model', model);
         }
+        const cliCommand = `${cliRunner.name} ${cliArgs.join(' ')}`;
 
-        // 에디터 사이드 영역에 터미널 생성 및 CLI 실행
+        // 에디터 사이드 영역에 터미널 생성
         const terminal = vscode.window.createTerminal({
           name: `${name} CLI`,
-          shellPath: cliRunner.name,
-          shellArgs,
           location: {
             viewColumn: vscode.ViewColumn.Beside,
           },
           iconPath: config.iconPath,
         });
         terminal.show();
+        terminal.sendText(cliCommand);
 
         stream.markdown(`🚀 **Handoff Successful**\n\n`);
         stream.markdown(`Interactive ${name} CLI has been opened in a side terminal with session \`${sessionId}\`.\n\n`);
