@@ -204,11 +204,13 @@ export abstract class SpawnCliRunner implements CliRunner {
     this.cleanupAbortListener(context);
     this.processRemainingBuffer(context);
 
-    console.log('[CLI Debug] Process exited with code:', exitCode);
-    console.log('[CLI Debug] Full content length:', context.fullContent.value.length);
-    console.log('[CLI Debug] Content preview:', context.fullContent.value.substring(0, 200));
-    if (context.stderrContent.value) {
-      console.error('[CLI Debug] stderr content:', context.stderrContent.value);
+    if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
+      console.log('[CLI Debug] Process exited with code:', exitCode);
+      console.log('[CLI Debug] Full content length:', context.fullContent.value.length);
+      console.log('[CLI Debug] Content preview:', context.fullContent.value.substring(0, 200));
+      if (context.stderrContent.value) {
+        console.error('[CLI Debug] stderr content:', context.stderrContent.value);
+      }
     }
 
     if (exitCode === 0) {
@@ -218,7 +220,9 @@ export abstract class SpawnCliRunner implements CliRunner {
         sessionId: context.extractedSessionId.value,
       });
     } else {
-      console.error('[CLI Error] Process failed with exit code:', exitCode);
+      if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
+        console.error('[CLI Error] Process failed with exit code:', exitCode);
+      }
       const errorDetails = context.stderrContent.value 
         ? `\nStderr: ${context.stderrContent.value}`
         : '';
@@ -263,7 +267,9 @@ export abstract class SpawnCliRunner implements CliRunner {
     childProcess.stderr?.on('data', (chunk: Buffer) => {
       const text = chunk.toString();
       context.stderrContent.value += text;
-      console.error('[CLI stderr]', text);
+      if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
+        console.error('[CLI stderr]', text);
+      }
       // JSON 파싱 시도 (일부 CLI는 stderr로도 JSON 출력)
       this.processStderrChunk(chunk, context);
     });
@@ -316,11 +322,13 @@ export abstract class SpawnCliRunner implements CliRunner {
     // 전체 인자 조합: escapedArgs + escapedPromptArgs (옵션 먼저, 프롬프트는 마지막)
     const allArgs = [...escapedArgs, ...escapedPromptArgs];
 
-    // 디버깅: 실제 실행되는 명령어 로깅
-    console.log('[CLI Debug] Command:', command);
-    console.log('[CLI Debug] Args (raw):', JSON.stringify(args, null, 2));
-    console.log('[CLI Debug] Prompt Args:', JSON.stringify(promptArgs, null, 2));
-    console.log('[CLI Debug] All Args (escaped):', JSON.stringify(allArgs, null, 2));
+    // 디버깅: 실제 실행되는 명령어 로깅 (환경 변수로 활성화)
+    if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
+      console.log('[CLI Debug] Command:', command);
+      console.log('[CLI Debug] Args (raw):', JSON.stringify(args, null, 2));
+      console.log('[CLI Debug] Prompt Args:', JSON.stringify(promptArgs, null, 2));
+      console.log('[CLI Debug] All Args (escaped):', JSON.stringify(allArgs, null, 2));
+    }
 
     return new Promise((resolve) => {
       const childProcess: ChildProcess = spawn(command, allArgs, {

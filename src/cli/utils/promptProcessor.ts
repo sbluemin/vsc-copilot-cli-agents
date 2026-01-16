@@ -52,9 +52,7 @@ export function resolveFileReferences(
   // range가 없는 참조는 프롬프트에 포함되지 않은 것이므로 제외
   // range가 있는 참조만 역순으로 정렬하여 뒤에서부터 치환 (인덱스 변경 방지)
   const rangedRefs = references
-    .filter((ref): ref is vscode.ChatPromptReference & { range: [number, number] } => 
-      ref.range !== undefined
-    )
+    .filter((ref): ref is typeof ref & { range: [number, number] } => ref.range !== undefined)
     .sort((a, b) => b.range[0] - a.range[0]);
 
   let result = prompt;
