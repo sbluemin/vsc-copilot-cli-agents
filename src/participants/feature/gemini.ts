@@ -71,14 +71,15 @@ export class GeminiCliRunner extends SpawnCliRunner {
 
     if (this.pendingSystemPrompt) {
       // 시스템 프롬프팅 기법: 명확한 구분자로 시스템 지침과 사용자 요청 구분
-      finalPrompt = `
-        <system_instructions>
-        ${this.pendingSystemPrompt}
-        </system_instructions>
-
-        <user_request>
-        ${prompt}
-        </user_request>`;
+      finalPrompt = [
+        '<system_instructions>',
+        this.pendingSystemPrompt,
+        '</system_instructions>',
+        '',
+        '<user_request>',
+        prompt,
+        '</user_request>',
+      ].join('\n');
 
       // 사용 후 초기화
       this.pendingSystemPrompt = undefined;

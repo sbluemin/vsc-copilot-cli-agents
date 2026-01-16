@@ -30,7 +30,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length > 0) {
       for (const folder of workspaceFolders) {
-        args.push('--add-dir', folder.uri.path);
+        args.push('--add-dir', folder.uri.fsPath);
       }
     }
 
