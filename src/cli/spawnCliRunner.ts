@@ -20,6 +20,61 @@ import {
 } from './types';
 
 /**
+ * Windows 경로의 드라이브 문자를 대문자로 정규화
+ * 예: c:\path -> C:\path
+ * @param path - 정규화할 경로
+ * @returns 드라이브 문자가 대문자로 정규화된 경로
+ */
+export function normalizeWindowsDriveLetter(path: string): string {
+  if (process.platform === 'win32') {
+    return path.replace(/^([a-z]):/, (_, letter) => letter.toUpperCase() + ':');
+  }
+  return path;
+}
+
+/**
+ * spawn을 사용하여 명령을 안전하게 실행
+ * @param command - 실행할 명령어
+ * @param args - 명령어 인자 배열
+ * @param timeoutMs - 타임아웃 (밀리초)
+ * @returns stdout 출력
+ */
+export function executeCommand(command: string, args: string[], timeoutMs: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const childProcess = spawn(command, args, { shell: true });
+    let stdout = '';
+    let stderr = '';
+
+    const timer = setTimeout(() => {
+      childProcess.kill('SIGTERM');
+      reject(new Error('Command execution timed out'));
+    }, timeoutMs);
+
+    childProcess.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    childProcess.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    childProcess.on('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+
+    childProcess.on('close', (code) => {
+      clearTimeout(timer);
+      if (code === 0) {
+        resolve(stdout);
+      } else {
+        reject(new Error(stderr || `Command exited with code ${code}`));
+      }
+    });
+  });
+}
+
+/**
  * 스트리밍 파싱 결과 (세션 ID 포함)
  */
 export interface ParseResult {
@@ -331,8 +386,12 @@ export abstract class SpawnCliRunner implements CliRunner {
     }
 
     return new Promise((resolve) => {
+      const workingDir = normalizeWindowsDriveLetter(
+        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
+      );
+      
       const childProcess: ChildProcess = spawn(command, allArgs, {
-        cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd(),
+        cwd: workingDir,
         env: process.env,
         shell: true, // Windows .cmd 지원 및 PATH 명령어 탐색을 위해 shell: true 유지
         stdio: ['ignore', 'pipe', 'pipe'],

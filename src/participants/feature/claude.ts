@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
 import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
-import { executeCommand } from '../../cli/utils/commandExecutor';
+import { executeCommand } from '../../cli/spawnCliRunner';
 import { ParticipantConfig } from '../types';
 
 export class ClaudeCliRunner extends SpawnCliRunner {
