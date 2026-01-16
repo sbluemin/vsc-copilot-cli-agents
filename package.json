@@ -123,9 +123,9 @@
           "default": [
             "google_web_search",
             "web_fetch",
-            "run_in_shell_command"
+            "run_shell_command"
           ],
-          "markdownDescription": "List of tools available for Gemini CLI. Examples: `google_web_search`, `web_fetch`, `run_in_shell_command`."
+          "markdownDescription": "List of tools available for Gemini CLI. Examples: `google_web_search`, `web_fetch`, `run_shell_command`."
         }
       }
     }
