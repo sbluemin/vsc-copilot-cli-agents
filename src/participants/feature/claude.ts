@@ -14,7 +14,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
   protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
     const config = vscode.workspace.getConfiguration('CCA');
     const command = 'claude';
-    const args = ['--output-format', 'stream-json', '--verbose'];
+    const args = ['--output-format', 'stream-json', '--verbose', '--include-partial-messages'];
 
     const allowedTools = ['WebSearch'];
     args.push('--allowed-tools', allowedTools.join(','));
