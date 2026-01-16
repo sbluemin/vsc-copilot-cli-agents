@@ -4,7 +4,7 @@ Copilot extension for integrating multiple Code Agent CLIs directly into VS Code
 
 ## Introduction
 
-![Introduction](./.github/docs/introduction.gif)
+![Introduction](https://raw.githubusercontent.com/wiki/sbluemin/vsc-copilot-cli-agents/docs/introduction.gif)
 
 ## Motivation
 
@@ -16,62 +16,39 @@ On the other hand, pure models like Gemini and Claude (such as Sonnet 4.5 with i
 
 ### Chat Participants
 
-This extension adds the following chat participants to GitHub Copilot:
-
 - **@gemini**: Google Gemini AI Assistant
 - **@claude**: Anthropic Claude AI Assistant
 
-> **Note**: Since Gemini and Claude are used directly as CLIs, Copilot's request processing is not used.
+### Slash Commands
 
-#### Slash Commands
-
-Each chat participant supports the following slash commands:
-
-- **/doctor**: Check CLI installation status and verify it's working properly
-![Doctor](./.github/docs/doctor.gif)
-
-- **/session**: Display the current chat session ID for resuming conversations
-![Session](./.github/docs/session.gif)
-
-- **/handoff**: Open an interactive CLI terminal with the current session, allowing you to continue the conversation directly in the terminal with full CLI capabilities
-![Handoff](./.github/docs/handoff.gif)
-
-- **/passAgent**: Pass Custom Agent mode instructions to CLI, enabling you to leverage GitHub Copilot's Custom Agent features with external CLI models
-![PassAgent](./.github/docs/passAgent.gif)
+- **/doctor**: Check CLI installation status
+- **/session**: Display current session ID
+- **/handoff**: Open interactive CLI terminal with current session
+- **/passAgent**: Pass Custom Agent mode instructions to CLI
 
 ### Commands
 
-This extension provides the following commands:
+- **Scaffold Code Agents**: Create recommended project structure
 
-- **Scaffold Code Agents**: Creates the recommended project structure for Code Agent integration
-![Scaffold](./.github/docs/scaffold.gif)
-
-### Configurations
-
-This extension provides the following configurations:
+### Configuration
 
 - **Model Selection**: Select the underlying model for each agent
-![Models](./.github/docs/models.gif)
+- **Allowed Tools**: Configure which tools each agent can use
 
-- **Allowed Tools Configuration**: Configure which tools each agent can use
-  - **Claude**: Customize allowed tools (default: `WebSearch`, `WebFetch`, `Bash`)
-  - **Gemini**: Customize allowed tools (default: `google_web_search`, `web_fetch`, `run_in_shell_command`)
+> 📖 **For detailed documentation with demos, visit the [Wiki](https://github.com/sbluemin/vsc-copilot-cli-agents/wiki).**
 
-## Usage
+## Quick Start
 
-1. Install and log in to Gemini CLI or Claude Code.
-   - [Gemini CLI](https://geminicli.com/)
-   - [Claude Code](https://claude.com/product/claude-code)
-2. Open GitHub Copilot Chat in VS Code.
-3. Type `@gemini` or `@claude` followed by your query.
+1. Install and log in to [Gemini CLI](https://geminicli.com/) or [Claude Code](https://claude.com/product/claude-code)
+2. Open GitHub Copilot Chat in VS Code
+3. Type `@gemini` or `@claude` followed by your query
 
 ## Important Notes
 
-1. Even if you use GitHub Copilot's 'Add Context' feature, it is not attached.
-   > **Note**: This is intended to use the CLI cleanly without polluting its own features. If you wish to perform advanced tasks, please use the CLI directly after restoring the session.
+- Context from Copilot's 'Add Context' feature is not attached to CLI queries
+- Working directory is the currently open VS Code workspace
+- Write operation tools are disabled by default (use `/handoff` for full capabilities)
 
-2. The working directory for all CLIs is the open path in VS Code.
-   > **Note**: This allows you to purely utilize the instruction files and capabilities within the project.
+## License
 
-3. Write operation tools are not provided for the CLI.
-   > **Note**: If you need advanced operations (e.g., write operations), use the Handoff feature.
+MIT
