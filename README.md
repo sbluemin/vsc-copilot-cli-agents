@@ -36,6 +36,9 @@ Each chat participant supports the following slash commands:
 - **/handoff**: Open an interactive CLI terminal with the current session, allowing you to continue the conversation directly in the terminal with full CLI capabilities
 ![Handoff](./.github/docs/handoff.gif)
 
+- **/passAgent**: Pass Custom Agent mode instructions to CLI, enabling you to leverage GitHub Copilot's Custom Agent features with external CLI models
+![PassAgent](./.github/docs/passAgent.gif)
+
 ### Commands
 
 This extension provides the following commands:
@@ -49,6 +52,10 @@ This extension provides the following configurations:
 
 - **Model Selection**: Select the underlying model for each agent
 ![Models](./.github/docs/models.gif)
+
+- **Allowed Tools Configuration**: Configure which tools each agent can use
+  - **Claude**: Customize allowed tools (default: `WebSearch`, `WebFetch`, `Bash`)
+  - **Gemini**: Customize allowed tools (default: `google_web_search`, `web_fetch`, `run_in_shell_command`)
 
 ## Usage
 
