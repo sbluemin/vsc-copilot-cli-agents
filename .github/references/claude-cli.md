@@ -25,6 +25,7 @@ claude --print "프롬프트 내용"
 | `-p, --print` | Non-Interactive 모드, 응답 출력 후 종료 |
 | `--model <model>` | 사용할 모델 지정 (예: `sonnet`, `opus`) |
 | `--output-format <format>` | 출력 형식: `text`, `json`, `stream-json` |
+| `--include-partial-messages` | 어시스턴트 응답 실시간 스트리밍 (부분 메시지 포함) |
 | `--system-prompt <prompt>` | 시스템 프롬프트 설정 |
 | `--append-system-prompt <prompt>` | 기본 시스템 프롬프트에 추가 |
 | `--dangerously-skip-permissions` | 모든 권한 확인 우회 (샌드박스 전용) |
@@ -97,6 +98,7 @@ stream-json 모드에서는 각 줄마다 하나의 JSON 객체가 출력됩니�
 
 - `message.content` - 응답 내용 배열 (text, tool_use 등)
 - `message.stop_reason` - 응답 종료 이유 (`end_turn`, `max_tokens` 등)
+- **참고**: `--include-partial-messages` 사용 시, `content[].text`에 누적된 전체 텍스트가 포함된 중간 메시지들이 여러 번 전송됩니다.
 
 #### 3. result (최종 결과)
 
@@ -132,14 +134,11 @@ claude -p "프롬프트" --json-schema '{"type":"object","properties":{"name":{"
 ### Chat Participant용 권장 명령어
 
 ```bash
-# 기본 Non-Interactive 호출 (stream-json 사용, --verbose 필수)
-claude -p "프롬프트" --output-format stream-json --verbose
+# 기본 Non-Interactive 호출 (stream-json 및 실시간 스트리밍 사용)
+claude -p "프롬프트" --output-format stream-json --verbose --include-partial-messages
 
 # 권한 확인 우회 (신뢰할 수 있는 환경에서만)
-claude -p "프롬프트" --output-format stream-json --verbose --dangerously-skip-permissions
-
-# 커스텀 시스템 프롬프트 사용
-claude -p "프롬프트" --output-format stream-json --verbose --system-prompt "You are a helpful assistant"
+claude -p "프롬프트" --output-format stream-json --verbose --include-partial-messages --dangerously-skip-permissions
 ```
 
 ## 파이프 사용

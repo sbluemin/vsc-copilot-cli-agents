@@ -39,6 +39,10 @@
           {
             "name": "handoff",
             "description": "Open interactive CLI terminal with current session"
+          },
+          {
+            "name": "passAgent",
+            "description": "Pass Custom Agent mode instructions to CLI"
           }
         ]
       },
@@ -60,6 +64,10 @@
           {
             "name": "handoff",
             "description": "Open interactive CLI terminal with current session"
+          },
+          {
+            "name": "passAgent",
+            "description": "Pass Custom Agent mode instructions to CLI"
           }
         ]
       }
@@ -94,6 +102,30 @@
           ],
           "default": "haiku",
           "description": "Select the model for Claude CLI."
+        },
+        "CCA.claude.allowedTools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "WebSearch",
+            "WebFetch",
+            "Bash"
+          ],
+          "markdownDescription": "List of tools available for Claude CLI. Examples: `WebSearch`, `WebFetch`, `Bash`, `Edit`."
+        },
+        "CCA.gemini.allowedTools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "google_web_search",
+            "web_fetch",
+            "run_in_shell_command"
+          ],
+          "markdownDescription": "List of tools available for Gemini CLI. Examples: `google_web_search`, `web_fetch`, `run_in_shell_command`."
         }
       }
     }

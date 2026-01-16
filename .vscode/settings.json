@@ -1,10 +1,25 @@
 {
-  "files.exclude": {
-    "out": false,
-    "dist": false
-  },
-  "search.exclude": {
-    "out": true,
-    "dist": true
-  },
+    "chat.promptFilesRecommendations": {
+        "speckit.constitution": true,
+        "speckit.specify": true,
+        "speckit.plan": true,
+        "speckit.tasks": true,
+        "speckit.implement": true
+    },
+    "chat.tools.terminal.autoApprove": {
+        ".specify/scripts/bash/": true,
+        ".specify/scripts/powershell/": true
+    },
+    "files.exclude": {
+        "out": true,
+        "dist": true,
+        "**/node_modules": true,
+        "**/bower_components": true
+    },
+    "search.exclude": {
+        "out": true,
+        "dist": true,
+        "**/node_modules": true,
+        "**/bower_components": true
+    }
 }

@@ -11,13 +11,26 @@ import { ParticipantConfig } from '../types';
 export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
 
-  protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
+  /**
+   * 시스템 프롬프트 임시 저장 (buildPromptArgument에서 사용)
+   * Gemini CLI는 --system-prompt 옵션이 없으므로 프롬프트에 포함해야 함
+   */
+  private pendingSystemPrompt?: string;
+
+  protected buildCliOptions(options?: {
+    resumeSessionId?: string;
+    systemPrompt?: string;
+  }): { command: string; args: string[] } {
+    const { resumeSessionId, systemPrompt } = options ?? {};
     const config = vscode.workspace.getConfiguration('CCA');
     const command = 'gemini';
     const args = ['--output-format', 'stream-json'];
 
-    const allowedTools = ['glob', 'google_web_search', 'read_file', 'list_directory', 'search_file_content'];
-    args.push('--allowed-tools', allowedTools.join(','));
+    // 허용 도구 목록을 설정에서 읽음 (빈 배열이면 인자 생략)
+    const allowedTools = config.get<string[]>('gemini.allowedTools', []);
+    if (allowedTools.length > 0) {
+      args.push('--allowed-tools', allowedTools.join(','));
+    }
 
     // 다중 workspace 디렉토리 추가
     /* #NOT_WORKING: https://github.com/google-gemini/gemini-cli/issues/13669
@@ -36,6 +49,10 @@ export class GeminiCliRunner extends SpawnCliRunner {
       args.push('--model', model);
     }
 
+    // 시스템 프롬프트를 임시 저장 (buildPromptArgument에서 프롬프트에 포함)
+    // Gemini CLI는 --system-prompt 옵션이 없으므로 프롬프트 엔지니어링으로 처리
+    this.pendingSystemPrompt = systemPrompt;
+
     // 세션 재개 옵션 추가
     if (resumeSessionId) {
       args.push('--resume', resumeSessionId);
@@ -48,8 +65,28 @@ export class GeminiCliRunner extends SpawnCliRunner {
   }
 
   protected buildPromptArgument(prompt: string): string[] {
+    // Gemini CLI는 --system-prompt 옵션이 없으므로
+    // 시스템 프롬프트를 사용자 프롬프트 앞에 추가하여 전달
+    let finalPrompt = prompt;
+
+    if (this.pendingSystemPrompt) {
+      // 시스템 프롬프팅 기법: 명확한 구분자로 시스템 지침과 사용자 요청 구분
+      finalPrompt = [
+        '<system_instructions>',
+        this.pendingSystemPrompt,
+        '</system_instructions>',
+        '',
+        '<user_request>',
+        prompt,
+        '</user_request>',
+      ].join('\n');
+
+      // 사용 후 초기화
+      this.pendingSystemPrompt = undefined;
+    }
+
     // gemini는 prompt를 그대로 첫 번째 인자로 전달
-    return [prompt];
+    return [finalPrompt];
   }
 
   protected parseLineWithSession(line: string): ParseResult {

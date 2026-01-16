@@ -8,6 +8,8 @@
 export interface CliOptions {
   /** 프롬프트 내용 */
   prompt: string;
+  /** 시스템 프롬프트 (modeInstructions 등) */
+  systemPrompt?: string;
   /** 취소 토큰 */
   abortSignal?: AbortSignal;
   /** 재개할 CLI 세션 ID (resume 용도) */
