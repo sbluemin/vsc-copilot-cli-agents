@@ -13,10 +13,16 @@ This document defines the structure and patterns to follow when implementing Cha
 src/participants/
 ├── index.ts              # Module entry point (exports only)
 ├── types.ts              # Type definitions
+├── session.ts            # Chat session management utility
 ├── register.ts           # Participant registration module
 ├── handler.ts            # Common participant handler logic
-└── feature/              # Individual participant implementations
-    └── <cli-name>.ts     # Participant implementation (e.g., claude.ts, gemini.ts)
+├── feature/              # Individual participant implementations
+│   └── <cli-name>.ts     # Participant implementation (e.g., claude.ts, gemini.ts)
+└── command/              # Participant command implementations
+    ├── index.ts          # Command module entry point
+    ├── types.ts          # Command type definitions
+    └── feature/          # Individual command implementations
+        └── <command>.ts  # Command implementation (e.g., doctor.ts, session.ts)
 ```
 
 ## File Responsibilities
@@ -80,9 +86,15 @@ export function createMyParticipant(sessionStore: SessionStore): ParticipantConf
 ### 3. handler.ts
 - Contains common handler logic shared across all participants.
 - Exports `createParticipantHandler` function that creates the actual request handler.
+- Delegates command handling to the `command/` module via `findCommand()`.
 - Handles common functionality like session management, streaming, and error handling.
 
-### 4. register.ts
+### 4. session.ts
+- Contains `ChatSessionManager` class for session ID management.
+- Uses hidden markdown markers (`[](cca:sessionId)`) to persist session IDs in chat history.
+- Provides `findSessionId()` and `saveSessionId()` static methods.
+
+### 5. register.ts
 - Central module that registers all participants.
 - Exports `registerAllParticipants` function to be called from extension.ts.
 - Imports factory functions from each feature/*.ts file and manages them in an array.
@@ -132,14 +144,92 @@ export function registerAllParticipants(context: vscode.ExtensionContext): void 
 }
 ```
 
-### 5. index.ts
+### 6. index.ts
 - Module entry point that only performs exports.
 - Re-exports only the types and functions to be used externally.
 
 ```typescript
 export * from './types';
 export * from './handler';
+export * from './session';
+export * from './command';
 export { registerAllParticipants } from './register';
+```
+
+## Participant Command Module
+
+### command/types.ts
+- Defines `CommandContext` interface for command handler context.
+- Defines `CommandHandler` function type.
+- Defines `ParticipantCommand` interface for command configuration.
+
+```typescript
+export interface CommandContext {
+  request: vscode.ChatRequest;
+  context: vscode.ChatContext;
+  stream: vscode.ChatResponseStream;
+  token: vscode.CancellationToken;
+  config: ParticipantConfig;
+}
+
+export type CommandHandler = (ctx: CommandContext) => Promise<boolean>;
+
+export interface ParticipantCommand {
+  name: string;
+  description: string;
+  handler: CommandHandler;
+}
+```
+
+### command/feature/<command>.ts (Individual Command Implementation)
+- Command files are placed in the `command/feature/` directory.
+- Each file is responsible for a single command implementation.
+- Export the command configuration object at the end of the file.
+
+**Structure Example:**
+```typescript
+import { ParticipantCommand, CommandContext } from '../types';
+import { ChatSessionManager } from '../../session';
+
+async function handleMyCommand(ctx: CommandContext): Promise<boolean> {
+  const { stream, config } = ctx;
+  // Command implementation
+  stream.markdown('Command executed successfully!');
+  return true;
+}
+
+export const myCommand: ParticipantCommand = {
+  name: 'my-command',
+  description: 'My command description',
+  handler: handleMyCommand,
+};
+```
+
+### command/index.ts
+- Module entry point that exports types and all commands.
+- Provides `findCommand()` function to look up commands by name.
+- Maintains `participantCommands` array of all registered commands.
+
+```typescript
+export * from './types';
+export { doctorCommand } from './feature/doctor';
+export { sessionCommand } from './feature/session';
+export { handoffCommand } from './feature/handoff';
+
+import { ParticipantCommand } from './types';
+import { doctorCommand } from './feature/doctor';
+import { sessionCommand } from './feature/session';
+import { handoffCommand } from './feature/handoff';
+
+export const participantCommands: ParticipantCommand[] = [
+  doctorCommand,
+  sessionCommand,
+  handoffCommand,
+];
+
+export function findCommand(commandName: string): ParticipantCommand | undefined {
+  return participantCommands.find((cmd) => cmd.name === commandName);
+}
 ```
 
 ## Participant Implementation Guidelines
@@ -213,3 +303,33 @@ export { registerAllParticipants } from './register';
    - Run Extension Development Host with F5
    - Test participant from Chat panel (@participant-name)
    - Test /doctor command for health check
+
+## Procedure for Adding New Commands
+
+1. **Declare command in package.json**
+   ```json
+   "chatParticipants": [
+     {
+       "id": "copilot-cli-agents.my-participant",
+       "commands": [
+         {
+           "name": "my-command",
+           "description": "My command description"
+         }
+       ]
+     }
+   ]
+   ```
+
+2. **Create command/feature/<command>.ts file**
+   - Implement command handler function
+   - Export command configuration object
+
+3. **Register command in command/index.ts**
+   - Add import from `./feature/<command>`
+   - Add to `participantCommands` array
+   - Add to exports
+
+4. **Test**
+   - Run Extension Development Host with F5
+   - Test command from Chat panel (/command-name)
