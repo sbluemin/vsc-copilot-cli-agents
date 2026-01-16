@@ -11,7 +11,11 @@ import { ParticipantConfig } from '../types';
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
 
-  protected buildCliOptions(resumeSessionId?: string): { command: string; args: string[] } {
+  protected buildCliOptions(options?: {
+    resumeSessionId?: string;
+    systemPrompt?: string;
+  }): { command: string; args: string[] } {
+    const { resumeSessionId, systemPrompt } = options ?? {};
     const config = vscode.workspace.getConfiguration('CCA');
     const command = 'claude';
     const args = ['--output-format', 'stream-json', '--verbose', '--include-partial-messages'];
@@ -30,6 +34,11 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     const model = config.get<string>('claude.model');
     if (model) {
       args.push('--model', model);
+    }
+
+    // 시스템 프롬프트 추가 (modeInstructions 등)
+    if (systemPrompt) {
+      args.push('--system-prompt', systemPrompt);
     }
 
     // 세션 재개 옵션 추가

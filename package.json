@@ -39,6 +39,10 @@
           {
             "name": "handoff",
             "description": "Open interactive CLI terminal with current session"
+          },
+          {
+            "name": "passAgent",
+            "description": "Pass Custom Agent mode instructions to CLI"
           }
         ]
       },
@@ -60,6 +64,10 @@
           {
             "name": "handoff",
             "description": "Open interactive CLI terminal with current session"
+          },
+          {
+            "name": "passAgent",
+            "description": "Pass Custom Agent mode instructions to CLI"
           }
         ]
       }

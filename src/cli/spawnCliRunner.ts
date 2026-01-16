@@ -36,6 +36,10 @@ export interface ParseResult {
 interface ProcessContext {
   /** 전체 누적 콘텐츠 */
   fullContent: { value: string };
+  /** stderr 누적 콘텐츠 (에러 로깅용) */
+  stderrContent: { value: string };
+  /** stderr 라인 버퍼 */
+  stderrBuffer: { value: string };
   /** 라인 버퍼 */
   buffer: { value: string };
   /** 추출된 세션 ID */
@@ -58,10 +62,13 @@ export abstract class SpawnCliRunner implements CliRunner {
 
   /**
    * CLI 실행 옵션 빌드
-   * @param resumeSessionId - 재개할 세션 ID (선택적)
+   * @param options - 빌드 옵션 (resumeSessionId, systemPrompt)
    * @returns CLI 명령어와 추가 인자
    */
-  protected abstract buildCliOptions(resumeSessionId?: string): { command: string; args: string[] };
+  protected abstract buildCliOptions(options?: {
+    resumeSessionId?: string;
+    systemPrompt?: string;
+  }): { command: string; args: string[] };
 
   /**
    * 프롬프트 인자 빌드
@@ -97,17 +104,33 @@ export abstract class SpawnCliRunner implements CliRunner {
   }
 
   /**
-   * 데이터 청크 처리 (stdout/stderr 공통)
+   * JSON 라인 여부 판단
    */
-  private processChunk(chunk: Buffer, context: ProcessContext): void {
-    context.buffer.value += chunk.toString();
-    const lines = context.buffer.value.split('\n');
+  private isLikelyJsonLine(line: string): boolean {
+    const trimmed = line.trim();
+    return trimmed.startsWith('{') || trimmed.startsWith('[');
+  }
+
+  /**
+   * 데이터 청크 처리 (버퍼 분리)
+   */
+  private processChunkWithBuffer(
+    chunk: Buffer,
+    buffer: { value: string },
+    context: ProcessContext,
+    parseJsonOnly: boolean
+  ): void {
+    buffer.value += chunk.toString();
+    const lines = buffer.value.split('\n');
     // 마지막 불완전한 라인은 버퍼에 유지
-    context.buffer.value = lines.pop() || '';
+    buffer.value = lines.pop() || '';
 
     for (const line of lines) {
       const cleanLine = this.cleanAnsi(line).trim();
       if (!cleanLine) {
+        continue;
+      }
+      if (parseJsonOnly && !this.isLikelyJsonLine(cleanLine)) {
         continue;
       }
 
@@ -125,6 +148,20 @@ export abstract class SpawnCliRunner implements CliRunner {
         context.onContent(parseResult.content);
       }
     }
+  }
+
+  /**
+   * 데이터 청크 처리 (stdout)
+   */
+  private processChunk(chunk: Buffer, context: ProcessContext): void {
+    this.processChunkWithBuffer(chunk, context.buffer, context, false);
+  }
+
+  /**
+   * 데이터 청크 처리 (stderr)
+   */
+  private processStderrChunk(chunk: Buffer, context: ProcessContext): void {
+    this.processChunkWithBuffer(chunk, context.stderrBuffer, context, true);
   }
 
   /**
@@ -167,6 +204,13 @@ export abstract class SpawnCliRunner implements CliRunner {
     this.cleanupAbortListener(context);
     this.processRemainingBuffer(context);
 
+    console.log('[CLI Debug] Process exited with code:', exitCode);
+    console.log('[CLI Debug] Full content length:', context.fullContent.value.length);
+    console.log('[CLI Debug] Content preview:', context.fullContent.value.substring(0, 200));
+    if (context.stderrContent.value) {
+      console.error('[CLI Debug] stderr content:', context.stderrContent.value);
+    }
+
     if (exitCode === 0) {
       context.resolve({
         success: true,
@@ -174,10 +218,14 @@ export abstract class SpawnCliRunner implements CliRunner {
         sessionId: context.extractedSessionId.value,
       });
     } else {
+      console.error('[CLI Error] Process failed with exit code:', exitCode);
+      const errorDetails = context.stderrContent.value 
+        ? `\nStderr: ${context.stderrContent.value}`
+        : '';
       context.resolve({
         success: false,
         content: context.fullContent.value,
-        error: `Process exited with code ${exitCode}`,
+        error: `Process exited with code ${exitCode}${errorDetails}`,
         sessionId: context.extractedSessionId.value,
       });
     }
@@ -211,9 +259,13 @@ export abstract class SpawnCliRunner implements CliRunner {
       this.processChunk(chunk, context);
     });
 
-    // stderr도 함께 처리 (일부 CLI는 stderr로 출력)
+    // stderr 별도 처리 (에러 메시지 캡처)
     childProcess.stderr?.on('data', (chunk: Buffer) => {
-      this.processChunk(chunk, context);
+      const text = chunk.toString();
+      context.stderrContent.value += text;
+      console.error('[CLI stderr]', text);
+      // JSON 파싱 시도 (일부 CLI는 stderr로도 JSON 출력)
+      this.processStderrChunk(chunk, context);
     });
 
     // 종료 이벤트 처리
@@ -253,27 +305,36 @@ export abstract class SpawnCliRunner implements CliRunner {
    * CLI 실행 (스트리밍)
    */
   async run(options: CliOptions, onContent: StreamCallback): Promise<CliResult> {
-    const { prompt, abortSignal, resumeSessionId } = options;
-    const { command, args } = this.buildCliOptions(resumeSessionId);
+    const { prompt, systemPrompt, abortSignal, resumeSessionId } = options;
+    const { command, args } = this.buildCliOptions({ resumeSessionId, systemPrompt });
     const promptArgs = this.buildPromptArgument(prompt);
 
-    // 프롬프트 인자에 셸 이스케이프 적용 (줄바꿈 등 특수문자 처리)
+    // shell: true 사용 시 모든 인자에 셸 이스케이프 적용 (줄바꿈, 특수문자, 공백 등 처리)
+    const escapedArgs = args.map((arg) => this.escapeShellArg(arg));
     const escapedPromptArgs = promptArgs.map((arg) => this.escapeShellArg(arg));
 
-    // 전체 인자 조합: escapedPromptArgs + args
-    const allArgs = [...escapedPromptArgs, ...args];
+    // 전체 인자 조합: escapedArgs + escapedPromptArgs (옵션 먼저, 프롬프트는 마지막)
+    const allArgs = [...escapedArgs, ...escapedPromptArgs];
+
+    // 디버깅: 실제 실행되는 명령어 로깅
+    console.log('[CLI Debug] Command:', command);
+    console.log('[CLI Debug] Args (raw):', JSON.stringify(args, null, 2));
+    console.log('[CLI Debug] Prompt Args:', JSON.stringify(promptArgs, null, 2));
+    console.log('[CLI Debug] All Args (escaped):', JSON.stringify(allArgs, null, 2));
 
     return new Promise((resolve) => {
       const childProcess: ChildProcess = spawn(command, allArgs, {
         cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd(),
         env: process.env,
-        shell: true,
+        shell: true, // Windows .cmd 지원 및 PATH 명령어 탐색을 위해 shell: true 유지
         stdio: ['ignore', 'pipe', 'pipe'],
       });
 
       // 프로세스 컨텍스트 생성
       const context: ProcessContext = {
         fullContent: { value: '' },
+        stderrContent: { value: '' },
+        stderrBuffer: { value: '' },
         buffer: { value: '' },
         extractedSessionId: {},
         onContent,
