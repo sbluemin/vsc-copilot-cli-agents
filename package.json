@@ -113,7 +113,7 @@
             "WebFetch",
             "Bash"
           ],
-          "markdownDescription": "Claude CLI가 사용할 수 있는 도구 목록. 예: `WebSearch`, `WebFetch`, `Bash`, `Edit`."
+          "markdownDescription": "List of tools available for Claude CLI. Examples: `WebSearch`, `WebFetch`, `Bash`, `Edit`."
         },
         "CCA.gemini.allowedTools": {
           "type": "array",
@@ -125,7 +125,7 @@
             "web_fetch",
             "run_in_shell_command"
           ],
-          "markdownDescription": "Gemini CLI가 사용할 수 있는 도구 목록. 예: `google_web_search`, `web_fetch`, `run_in_shell_command`."
+          "markdownDescription": "List of tools available for Gemini CLI. Examples: `google_web_search`, `web_fetch`, `run_in_shell_command`."
         }
       }
     }
