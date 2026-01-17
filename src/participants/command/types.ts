@@ -3,7 +3,7 @@
  */
 
 import * as vscode from 'vscode';
-import type { ParticipantConfig } from '../types';
+import type { ModeInstructions, ParticipantConfig } from '../types';
 
 /**
  * Participant Command 핸들러 컨텍스트
@@ -17,6 +17,10 @@ export interface CommandContext {
   stream: vscode.ChatResponseStream;
   /** 취소 토큰 */
   token: vscode.CancellationToken;
+  /** 모드 지침 객체 (있는 경우) */
+  modeInstructions?: ModeInstructions;
+  /** 프롬프트 내용 (있는 경우) */
+  prompt?: string;
   /** Participant 설정 */
   config: ParticipantConfig;
 }

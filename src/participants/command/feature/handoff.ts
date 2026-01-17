@@ -13,7 +13,7 @@ import { ChatSessionManager } from '../../session';
  * @returns 커맨드 처리 완료 여부
  */
 async function handleHandoff(ctx: CommandContext): Promise<boolean> {
-  const { context, stream, config } = ctx;
+  const { context, stream, config, modeInstructions, prompt } = ctx;
   const { cliRunner, name, iconPath } = config;
 
   const sessionId = ChatSessionManager.findSessionId(context.history);
@@ -26,16 +26,14 @@ async function handleHandoff(ctx: CommandContext): Promise<boolean> {
   }
 
   try {
-    // 모델 설정 가져오기
-    const ccaConfig = vscode.workspace.getConfiguration('CCA');
-    const model = ccaConfig.get<string>(`${cliRunner.name}.model`);
-
     // CLI 명령어 구성
-    const cliArgs = ['--resume', sessionId];
-    if (model) {
-      cliArgs.push('--model', model);
-    }
-    const cliCommand = `${cliRunner.name} ${cliArgs.join(' ')}`;
+    const cliCommand = [
+      cliRunner.name, 
+      ...cliRunner.getArgumentModel(),
+      ...cliRunner.getArgumentResume(sessionId),
+      ...cliRunner.getArgumentDirectories(),
+      ...cliRunner.getArgumentPrompt({ modeInstructions, prompt }),
+    ].join(' ');
 
     // 에디터 사이드 영역에 터미널 생성
     const terminal = vscode.window.createTerminal({

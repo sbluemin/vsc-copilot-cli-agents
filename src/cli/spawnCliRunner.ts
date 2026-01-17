@@ -18,6 +18,7 @@ import {
   HealthGuidance,
   CliHealthStatus,
 } from './types';
+import { ModeInstructions } from '../participants/types';
 
 /**
  * Windows 경로의 드라이브 문자를 대문자로 정규화
@@ -115,22 +116,31 @@ interface ProcessContext {
 export abstract class SpawnCliRunner implements CliRunner {
   abstract readonly name: string;
 
+  abstract getArgumentOutputFormat(): string[];
+
+  abstract getArgumentAllowedTools(): string[];
+
+  abstract getArgumentModel(): string[];
+
+  abstract getArgumentResume(sessionId?: string): string[];
+
+  abstract getArgumentDirectories(): string[];
+
+  abstract getArgumentPrompt(options: { 
+    modeInstructions?: ModeInstructions; 
+    prompt?: string 
+  }): string[];
+
   /**
    * CLI 실행 옵션 빌드
-   * @param options - 빌드 옵션 (resumeSessionId, systemPrompt)
+   * @param options - 옵션 객체
    * @returns CLI 명령어와 추가 인자
    */
   protected abstract buildCliOptions(options?: {
     resumeSessionId?: string;
-    systemPrompt?: string;
+    modeInstructions?: ModeInstructions;
+    prompt?: string;
   }): { command: string; args: string[] };
-
-  /**
-   * 프롬프트 인자 빌드
-   * @param prompt - 프롬프트 내용
-   * @returns 프롬프트를 CLI 인자 형태로 반환
-   */
-  protected abstract buildPromptArgument(prompt: string): string[];
 
   /**
    * 스트리밍 라인 파싱 (세션 ID 추출 포함)
@@ -366,22 +376,16 @@ export abstract class SpawnCliRunner implements CliRunner {
    * CLI 실행 (스트리밍)
    */
   async run(options: CliOptions, onContent: StreamCallback): Promise<CliResult> {
-    const { prompt, systemPrompt, abortSignal, resumeSessionId } = options;
-    const { command, args } = this.buildCliOptions({ resumeSessionId, systemPrompt });
-    const promptArgs = this.buildPromptArgument(prompt);
+    const { prompt, modeInstructions, abortSignal, resumeSessionId } = options;
+    const { command, args } = this.buildCliOptions({ resumeSessionId, modeInstructions, prompt });
 
     // shell: true 사용 시 모든 인자에 셸 이스케이프 적용 (줄바꿈, 특수문자, 공백 등 처리)
-    const escapedArgs = args.map((arg) => this.escapeShellArg(arg));
-    const escapedPromptArgs = promptArgs.map((arg) => this.escapeShellArg(arg));
-
-    // 전체 인자 조합: escapedArgs + escapedPromptArgs (옵션 먼저, 프롬프트는 마지막)
-    const allArgs = [...escapedArgs, ...escapedPromptArgs];
+    const allArgs = args.map((arg) => this.escapeShellArg(arg));
 
     // 디버깅: 실제 실행되는 명령어 로깅 (환경 변수로 활성화)
     if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
       console.log('[CLI Debug] Command:', command);
       console.log('[CLI Debug] Args (raw):', JSON.stringify(args, null, 2));
-      console.log('[CLI Debug] Prompt Args:', JSON.stringify(promptArgs, null, 2));
       console.log('[CLI Debug] All Args (escaped):', JSON.stringify(allArgs, null, 2));
     }
 

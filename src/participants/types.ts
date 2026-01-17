@@ -30,3 +30,11 @@ export interface ParticipantContext {
   /** 설정 */
   config: ParticipantConfig;
 }
+
+/**
+ * 모드 지침 객체 인터페이스
+ */
+export interface ModeInstructions {
+  name: string;
+  content: string;
+}

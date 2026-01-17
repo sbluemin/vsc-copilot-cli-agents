@@ -2,14 +2,16 @@
  * CLI 관련 타입 정의
  */
 
+import { ModeInstructions } from "../participants/types";
+
 /**
  * CLI 실행 옵션
  */
 export interface CliOptions {
+  /** 모드 지침 */
+  modeInstructions?: ModeInstructions;
   /** 프롬프트 내용 */
   prompt: string;
-  /** 시스템 프롬프트 (modeInstructions 등) */
-  systemPrompt?: string;
   /** 취소 토큰 */
   abortSignal?: AbortSignal;
   /** 재개할 CLI 세션 ID (resume 용도) */
@@ -172,6 +174,18 @@ export interface CliRunner {
    * @returns 실행 결과
    */
   run(options: CliOptions, onContent: StreamCallback): Promise<CliResult>;
+
+  getArgumentOutputFormat(): string[];
+
+  getArgumentAllowedTools(): string[];
+
+  getArgumentModel(): string[];
+
+  getArgumentResume(sessionId?: string): string[];
+
+  getArgumentDirectories(): string[];
+
+  getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[];
 
   /**
    * CLI 상태 검증 (doctor)

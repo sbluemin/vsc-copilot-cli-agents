@@ -6,32 +6,32 @@ import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
 import { GeminiStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
 import { executeCommand } from '../../cli/spawnCliRunner';
-import { ParticipantConfig } from '../types';
+import { ModeInstructions, ParticipantConfig } from '../types';
 
 export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
 
-  /**
-   * 시스템 프롬프트 임시 저장 (buildPromptArgument에서 사용)
-   * Gemini CLI는 --system-prompt 옵션이 없으므로 프롬프트에 포함해야 함
-   */
-  private pendingSystemPrompt?: string;
+  getArgumentOutputFormat(): string[] {
+    return ['--output-format', 'stream-json'];
+  }
 
-  protected buildCliOptions(options?: {
-    resumeSessionId?: string;
-    systemPrompt?: string;
-  }): { command: string; args: string[] } {
-    const { resumeSessionId, systemPrompt } = options ?? {};
+  getArgumentAllowedTools(): string[] {
     const config = vscode.workspace.getConfiguration('CCA');
-    const command = 'gemini';
-    const args = ['--output-format', 'stream-json'];
-
-    // 허용 도구 목록을 설정에서 읽음 (빈 배열이면 인자 생략)
     const allowedTools = config.get<string[]>('gemini.allowedTools', []);
-    if (allowedTools.length > 0) {
-      args.push('--allowed-tools', allowedTools.join(','));
-    }
+    return allowedTools.length > 0 ? ['--allowed-tools', allowedTools.join(',')] : [];
+  }
 
+  getArgumentModel(): string[] {
+    const config = vscode.workspace.getConfiguration('CCA');
+    const model = config.get<string>('gemini.model');
+    return model ? ['--model', model] : [];
+  }
+  
+  getArgumentResume(sessionId?: string): string[] {
+    return sessionId ? ['--resume', sessionId] : [];
+  }
+
+  getArgumentDirectories(): string[] {
     // 다중 workspace 디렉토리 추가
     /* #NOT_WORKING: https://github.com/google-gemini/gemini-cli/issues/13669
      * 현재 `비 인터렉티브` 모드에서 해당 옵션이 제대로 동작하지 않음
@@ -44,49 +44,58 @@ export class GeminiCliRunner extends SpawnCliRunner {
     }
     */
 
-    const model = config.get<string>('gemini.model');
-    if (model) {
-      args.push('--model', model);
-    }
-
-    // 시스템 프롬프트를 임시 저장 (buildPromptArgument에서 프롬프트에 포함)
-    // Gemini CLI는 --system-prompt 옵션이 없으므로 프롬프트 엔지니어링으로 처리
-    this.pendingSystemPrompt = systemPrompt;
-
-    // 세션 재개 옵션 추가
-    if (resumeSessionId) {
-      args.push('--resume', resumeSessionId);
-    }
-
-    return {
-      command,
-      args,
-    };
+    return [];
   }
 
-  protected buildPromptArgument(prompt: string): string[] {
-    // Gemini CLI는 --system-prompt 옵션이 없으므로
-    // 시스템 프롬프트를 사용자 프롬프트 앞에 추가하여 전달
-    let finalPrompt = prompt;
+  getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[] {
+    const { modeInstructions, prompt } = options;
 
-    if (this.pendingSystemPrompt) {
-      // 시스템 프롬프팅 기법: 명확한 구분자로 시스템 지침과 사용자 요청 구분
+    // Gemini CLI는 --system-prompt 옵션이 없으므로
+    // 모드 지침을 사용자 프롬프트 앞에 추가하여 전달
+    let finalPrompt = prompt ?? '';
+
+    if (modeInstructions) {
+      // 프롬프팅 기법: 명확한 구분자로 모드 지침과 사용자 요청 구분
       finalPrompt = [
-        '<system_instructions>',
-        this.pendingSystemPrompt,
-        '</system_instructions>',
+        '<mode_instructions>',
+        modeInstructions.name,
+        modeInstructions.content,
+        '</mode_instructions>',
         '',
         '<user_request>',
-        prompt,
+        prompt ?? '',
         '</user_request>',
       ].join('\n');
-
-      // 사용 후 초기화
-      this.pendingSystemPrompt = undefined;
     }
 
     // gemini는 prompt를 그대로 첫 번째 인자로 전달
     return [finalPrompt];
+  }
+
+  /**
+   * 시스템 프롬프트 임시 저장 (buildPromptArgument에서 사용)
+   * Gemini CLI는 --system-prompt 옵션이 없으므로 프롬프트에 포함해야 함
+   */
+
+  protected buildCliOptions(options?: {
+    resumeSessionId?: string;
+    modeInstructions?: ModeInstructions;
+    prompt?: string;
+  }): { command: string; args: string[] } {
+    const { resumeSessionId } = options ?? {};
+    const args: string[] = [];
+
+    args.push(...this.getArgumentOutputFormat());
+    args.push(...this.getArgumentAllowedTools());
+    args.push(...this.getArgumentModel());
+    args.push(...this.getArgumentResume(resumeSessionId));
+    args.push(...this.getArgumentDirectories());
+    args.push(...this.getArgumentPrompt({ modeInstructions: options?.modeInstructions, prompt: options?.prompt }));
+
+    return {
+      command: 'gemini',
+      args,
+    };
   }
 
   protected parseLineWithSession(line: string): ParseResult {

@@ -6,26 +6,33 @@ import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
 import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
 import { executeCommand } from '../../cli/spawnCliRunner';
-import { ParticipantConfig } from '../types';
+import { ModeInstructions, ParticipantConfig } from '../types';
 
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
 
-  protected buildCliOptions(options?: {
-    resumeSessionId?: string;
-    systemPrompt?: string;
-  }): { command: string; args: string[] } {
-    const { resumeSessionId, systemPrompt } = options ?? {};
+  getArgumentOutputFormat(): string[] {
+    return ['--output-format', 'stream-json', '--verbose', '--include-partial-messages'];
+  }
+
+  getArgumentAllowedTools(): string[] {
     const config = vscode.workspace.getConfiguration('CCA');
-    const command = 'claude';
-    const args = ['--output-format', 'stream-json', '--verbose', '--include-partial-messages'];
-
-    // 허용 도구 목록을 설정에서 읽음 (빈 배열이면 인자 생략)
     const allowedTools = config.get<string[]>('claude.allowedTools', []);
-    if (allowedTools.length > 0) {
-      args.push('--allowed-tools', allowedTools.join(','));
-    }
+    return allowedTools.length > 0 ? ['--allowed-tools', allowedTools.join(',')] : [];
+  }
 
+  getArgumentModel(): string[] {
+    const config = vscode.workspace.getConfiguration('CCA');
+    const model = config.get<string>('claude.model');
+    return model ? ['--model', model] : [];
+  }
+
+  getArgumentResume(sessionId?: string): string[] {
+    return sessionId ? ['--resume', sessionId] : [];
+  }
+
+  getArgumentDirectories(): string[] {
+    const args: string[] = [];
     // 다중 workspace 디렉토리 추가
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders && workspaceFolders.length > 0) {
@@ -33,32 +40,54 @@ export class ClaudeCliRunner extends SpawnCliRunner {
         args.push('--add-dir', folder.uri.fsPath);
       }
     }
+    return args;
+  }
 
-    const model = config.get<string>('claude.model');
-    if (model) {
-      args.push('--model', model);
+  getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[] {
+    const { modeInstructions, prompt } = options;
+    const args = [];
+
+    // modeInstructions가 있으면 JSON 형태로 agents 설정 추가
+    if (modeInstructions) {
+      const agentsConfig = JSON.stringify({
+        [modeInstructions.name]: {
+          description: `${modeInstructions.name} agent`,
+          prompt: modeInstructions.content
+        }
+      });
+
+      args.push('--agent', `'${modeInstructions.name}'`, '--agents', `'${agentsConfig}'`);
     }
 
-    // 시스템 프롬프트 추가 (modeInstructions 등)
-    if (systemPrompt) {
-      args.push('--system-prompt', systemPrompt);
+    // claude는 -p <prompt> 형태로 전달
+    if (prompt) {
+      args.push('-p', prompt);
     }
 
-    // 세션 재개 옵션 추가
-    if (resumeSessionId) {
-      args.push('--resume', resumeSessionId);
-    }
+    return args;
+  }
+
+  protected buildCliOptions(options?: {
+    resumeSessionId?: string;
+    modeInstructions?: ModeInstructions;
+    prompt?: string;
+  }): { command: string; args: string[] } {
+    const { resumeSessionId } = options ?? {};
+    const args: string[] = [];
+
+    args.push(...this.getArgumentOutputFormat());
+    args.push(...this.getArgumentAllowedTools());
+    args.push(...this.getArgumentModel());
+    args.push(...this.getArgumentResume(resumeSessionId));
+    args.push(...this.getArgumentDirectories());
+    args.push(...this.getArgumentPrompt({ modeInstructions: options?.modeInstructions, prompt: options?.prompt }));
 
     return {
-      command,
+      command: 'claude',
       args,
     };
   }
 
-  protected buildPromptArgument(prompt: string): string[] {
-    // claude는 -p <prompt> 형태로 전달
-    return ['-p', prompt];
-  }
 
   protected parseLineWithSession(line: string): ParseResult {
     try {

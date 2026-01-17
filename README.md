@@ -24,7 +24,7 @@ On the other hand, pure models like Gemini and Claude (such as Sonnet 4.5 with i
 - **/doctor**: Check CLI installation status
 - **/session**: Display current session ID
 - **/handoff**: Open interactive CLI terminal with current session
-- **/passAgent**: Pass Custom Agent mode instructions to CLI
+- **/passAgent**: Pass Custom Agent mode instructions to CLI (Gemini only)
 
 ### Commands
 

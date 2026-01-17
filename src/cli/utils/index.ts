@@ -3,4 +3,4 @@
  */
 
 export { formatHealthReport } from './healthReporter';
-export { resolveFileReferences, resolveFileReferencesInText } from './promptProcessor';
+export { resolveFileReferences } from './promptProcessor';
