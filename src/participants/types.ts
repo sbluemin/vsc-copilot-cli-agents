@@ -38,3 +38,19 @@ export interface ModeInstructions {
   name: string;
   content: string;
 }
+
+/*
+ * 확장된 ChatRequest 인터페이스
+ * VS Code의 Custom Agent 기능을 위한 proposed API 속성 지원
+ * @see https://code.visualstudio.com/api/extension-guides/chat
+ * 
+ * modeInstructions는 GitHub Copilot의 Custom Agent 모드에서 제공되는
+ * 시스템 프롬프트로, 외부 CLI 모델에 전달하여 Custom Agent의 동작을
+ * 재현할 수 있습니다.
+ */
+export interface ExtendedChatRequest extends vscode.ChatRequest {
+  /** 모드 지침 (커스텀 에이전트 설정 등) - Proposed API */
+  readonly modeInstructions?: string;
+  /** 추가 모드 지침 - Proposed API */
+  readonly modeInstructions2?: ModeInstructions;
+}

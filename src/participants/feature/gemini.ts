@@ -72,10 +72,66 @@ export class GeminiCliRunner extends SpawnCliRunner {
     return [finalPrompt];
   }
 
-  /**
-   * 시스템 프롬프트 임시 저장 (buildPromptArgument에서 사용)
-   * Gemini CLI는 --system-prompt 옵션이 없으므로 프롬프트에 포함해야 함
-   */
+  async checkInstallation(): Promise<InstallInfo> {
+    try {
+      // which/where 명령으로 경로 확인 (spawn으로 안전하게 실행)
+      const whichCmd = process.platform === 'win32' ? 'where' : 'which';
+      const pathOutput = await executeCommand(whichCmd, ['gemini'], 10000);
+      const cliPath = pathOutput
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line => line.length > 0)[0];
+
+      // 버전 확인 (spawn으로 안전하게 실행)
+      const versionOutput = await executeCommand('gemini', ['--version'], 10000);
+      const version = versionOutput.trim();
+
+      return {
+        status: 'installed',
+        version,
+        path: cliPath,
+      };
+    } catch (error: unknown) {
+      let errorMessage = 'Gemini CLI not found in PATH';
+
+      if (error && typeof error === 'object') {
+        const err = error as { code?: string; signal?: string; message?: string; killed?: boolean };
+
+        // 다양한 오류 유형 감지
+        if (err.code === 'ETIMEDOUT' || (err.killed && err.signal === 'SIGTERM')) {
+          errorMessage = 'Timed out while checking Gemini CLI installation';
+        } else if (err.code === 'ENOENT') {
+          errorMessage = 'Gemini CLI executable not found. Ensure it is installed and on your PATH.';
+        } else if (err.code === 'EACCES') {
+          errorMessage = 'Permission denied while executing Gemini CLI. Check executable permissions.';
+        } else if (err.message && err.message.trim() !== '') {
+          errorMessage = `Failed to verify Gemini CLI installation: ${err.message}`;
+        }
+      }
+
+      return {
+        status: 'not_installed',
+        error: errorMessage,
+      };
+    }
+  }
+
+  getInstallGuidance(): HealthGuidance {
+    return {
+      title: 'How to Install',
+      steps: [
+        'Visit the official GitHub repository',
+        'Follow the installation instructions for your platform',
+        'After installation, run `@gemini /doctor` again to verify',
+      ],
+      links: [
+        {
+          label: 'Gemini CLI Installation Guide',
+          url: 'https://geminicli.com/',
+        },
+      ],
+    };
+  }
 
   protected buildCliOptions(options?: {
     resumeSessionId?: string;
@@ -137,67 +193,6 @@ export class GeminiCliRunner extends SpawnCliRunner {
       // JSON 파싱 실패 시 무시
       return { content: null };
     }
-  }
-
-  protected async checkInstallation(): Promise<InstallInfo> {
-    try {
-      // which/where 명령으로 경로 확인 (spawn으로 안전하게 실행)
-      const whichCmd = process.platform === 'win32' ? 'where' : 'which';
-      const pathOutput = await executeCommand(whichCmd, ['gemini'], 10000);
-      const cliPath = pathOutput
-        .split(/\r?\n/)
-        .map(line => line.trim())
-        .filter(line => line.length > 0)[0];
-
-      // 버전 확인 (spawn으로 안전하게 실행)
-      const versionOutput = await executeCommand('gemini', ['--version'], 10000);
-      const version = versionOutput.trim();
-
-      return {
-        status: 'installed',
-        version,
-        path: cliPath,
-      };
-    } catch (error: unknown) {
-      let errorMessage = 'Gemini CLI not found in PATH';
-
-      if (error && typeof error === 'object') {
-        const err = error as { code?: string; signal?: string; message?: string; killed?: boolean };
-
-        // 다양한 오류 유형 감지
-        if (err.code === 'ETIMEDOUT' || (err.killed && err.signal === 'SIGTERM')) {
-          errorMessage = 'Timed out while checking Gemini CLI installation';
-        } else if (err.code === 'ENOENT') {
-          errorMessage = 'Gemini CLI executable not found. Ensure it is installed and on your PATH.';
-        } else if (err.code === 'EACCES') {
-          errorMessage = 'Permission denied while executing Gemini CLI. Check executable permissions.';
-        } else if (err.message && err.message.trim() !== '') {
-          errorMessage = `Failed to verify Gemini CLI installation: ${err.message}`;
-        }
-      }
-
-      return {
-        status: 'not_installed',
-        error: errorMessage,
-      };
-    }
-  }
-
-  protected getInstallGuidance(): HealthGuidance {
-    return {
-      title: 'How to Install',
-      steps: [
-        'Visit the official GitHub repository',
-        'Follow the installation instructions for your platform',
-        'After installation, run `@gemini /doctor` again to verify',
-      ],
-      links: [
-        {
-          label: 'Gemini CLI Installation Guide',
-          url: 'https://geminicli.com/',
-        },
-      ],
-    };
   }
 }
 

@@ -187,9 +187,7 @@ export interface CliRunner {
 
   getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[];
 
-  /**
-   * CLI 상태 검증 (doctor)
-   * @returns Doctor 검증 결과 (상태 + 가이드)
-   */
-  doctor(): Promise<DoctorResult>;
+  checkInstallation(): Promise<InstallInfo>;
+
+  getInstallGuidance(): HealthGuidance;
 }

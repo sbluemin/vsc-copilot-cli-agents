@@ -33,10 +33,21 @@ copilot-cli-agents/
 
 ## Key Commands
 
+### Build Commands
+
 - `npm run compile` - Build the project
 - `npm run watch` - Build in watch mode
-- `vsce package` - Create .vsix file
-- `vsce publish` - Publish to Marketplace
+
+### Test Commands
+
+- `npm run test:e2e` - Run E2E tests with headed browser
+- `npm run test:e2e:headless` - Run E2E tests in headless mode
+- `npm run test:e2e:debug` - Run E2E tests with Playwright debugger
+
+### Package & Publish
+
+- `npm run package` - Create .vsix file in `out/` directory
+- `npm run publish` - Publish to Marketplace
 
 ## References
 

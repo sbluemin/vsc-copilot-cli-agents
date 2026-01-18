@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import { ParticipantCommand, CommandContext } from '../types';
 import { ChatSessionManager } from '../../session';
+import { ExtendedChatRequest } from '../../types';
 
 /**
  * handoff 커맨드 핸들러
@@ -13,9 +14,10 @@ import { ChatSessionManager } from '../../session';
  * @returns 커맨드 처리 완료 여부
  */
 async function handleHandoff(ctx: CommandContext): Promise<boolean> {
-  const { context, stream, config, modeInstructions } = ctx;
+  const { context, stream, config, request} = ctx;
   const { cliRunner, name, iconPath } = config;
 
+  const modeInstructions = (request as ExtendedChatRequest).modeInstructions2;
   const sessionId = ChatSessionManager.findSessionId(context.history);
 
   if (!sessionId) {

@@ -17,8 +17,6 @@ export interface CommandContext {
   stream: vscode.ChatResponseStream;
   /** 취소 토큰 */
   token: vscode.CancellationToken;
-  /** 모드 지침 객체 (있는 경우) */
-  modeInstructions?: ModeInstructions;
   /** 프롬프트 내용 (있는 경우) */
   prompt?: string;
   /** Participant 설정 */

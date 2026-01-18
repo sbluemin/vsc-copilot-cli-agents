@@ -132,6 +132,18 @@ export abstract class SpawnCliRunner implements CliRunner {
   }): string[];
 
   /**
+   * CLI 설치 상태 확인
+   * @returns 설치 정보
+   */
+  abstract checkInstallation(): Promise<InstallInfo>;
+
+  /**
+   * 설치 가이드 반환
+   * @returns 설치 가이드
+   */
+  abstract getInstallGuidance(): HealthGuidance;
+
+  /**
    * CLI 실행 옵션 빌드
    * @param options - 옵션 객체
    * @returns CLI 명령어와 추가 인자
@@ -148,18 +160,6 @@ export abstract class SpawnCliRunner implements CliRunner {
    * @returns 파싱 결과 (콘텐츠 및 세션 ID)
    */
   protected abstract parseLineWithSession(line: string): ParseResult;
-
-  /**
-   * CLI 설치 상태 확인
-   * @returns 설치 정보
-   */
-  protected abstract checkInstallation(): Promise<InstallInfo>;
-
-  /**
-   * 설치 가이드 반환
-   * @returns 설치 가이드
-   */
-  protected abstract getInstallGuidance(): HealthGuidance;
 
   /**
    * ANSI escape 코드 제거
@@ -417,24 +417,5 @@ export abstract class SpawnCliRunner implements CliRunner {
       // 이벤트 핸들러 등록
       this.registerProcessHandlers(childProcess, context);
     });
-  }
-
-  /**
-   * CLI 상태 검증 실행
-   * @returns Doctor 검증 결과
-   */
-  async doctor(): Promise<DoctorResult> {
-    const install = await this.checkInstallation();
-
-    const status: CliHealthStatus = {
-      cli: this.name,
-      install,
-      checkedAt: new Date(),
-    };
-
-    return {
-      status,
-      installGuidance: this.getInstallGuidance(),
-    };
   }
 }
