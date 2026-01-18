@@ -6,3 +6,9 @@ node_modules
 
 # 세션 매핑 파일 (로컬 상태)
 .github/copilot-cli-agents.json
+
+# playwright 테스트 관련
+**/.vscode-test-user-data/
+**/screenshots/
+**/test-results/
+**/playwright-report/

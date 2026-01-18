@@ -22,6 +22,20 @@
       ],
       "sourceMaps": true,
       "preLaunchTask": "${defaultBuildTask}"
+    },
+    {
+      "name": "Run test E2E",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "test:e2e"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
     }
   ]
 }

@@ -131,12 +131,17 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "mkdir -p out && vsce package --out out/",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "test:e2e": "playwright test --config=tests/playwright.config.ts --headed",
+    "test:e2e:headless": "playwright test --config=tests/playwright.config.ts",
+    "test:e2e:debug": "playwright test --config=tests/playwright.config.ts --debug"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/node": "^22.19.3",
     "@types/vscode": "^1.107.0",
     "@vscode/vsce": "^2.12.0",
+    "playwright": "^1.57.0",
     "typescript": "^5.9.3"
   }
 }
