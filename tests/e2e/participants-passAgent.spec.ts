@@ -13,6 +13,7 @@ import {
   checkTerminalOpened,
   closeAllTerminals,
   screenshotDir,
+  getModifierKey,
 } from './helpers';
 
 /**
@@ -66,8 +67,9 @@ test.describe('PassAgent Command', () => {
    * Command Palette에서 'Chat: Open Chat (Test Agent)'를 실행합니다.
    */
   async function startNewChatWithTestAgent(): Promise<void> {
-    // Command Palette 열기
-    await page.keyboard.press('Control+Shift+P');
+    // Command Palette 열기 (Ctrl+Shift+P / Cmd+Shift+P)
+    const modifier = getModifierKey();
+    await page.keyboard.press(`${modifier}+Shift+P`);
     await page.waitForTimeout(500);
 
     // 'Chat: Open Chat (Test Agent)' 입력

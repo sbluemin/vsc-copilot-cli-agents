@@ -1,9 +1,21 @@
-import { Page, _electron as electron, ElectronApplication } from '@playwright/test';
-import * as path from 'path';
+import { _electron as electron, ElectronApplication, Page } from '@playwright/test';
 import * as fs from 'fs';
+import * as path from 'path';
 
 // 스크린샷 저장 경로
 export const screenshotDir = path.join(__dirname, '..', 'screenshots');
+
+// ============================================================================
+// 플랫폼 헬퍼
+// ============================================================================
+
+/**
+ * 현재 플랫폼에 맞는 modifier 키를 반환합니다.
+ * macOS: Meta (Cmd), Windows/Linux: Control
+ */
+export function getModifierKey(): 'Meta' | 'Control' {
+  return process.platform === 'darwin' ? 'Meta' : 'Control';
+}
 
 // 테스트용 사용자 데이터 디렉토리 (워크스페이스 루트의 .vscode/test-user-data)
 export const testUserDataDir = path.resolve(__dirname, '../../../.vscode/.e2e-test-user-data');
@@ -19,7 +31,7 @@ export const extensionDevPath = path.resolve(__dirname, '../../../');
 // ============================================================================
 
 /**
- * VS Code 실행 결과
+ * VS Code 실행 결과=
  */
 export interface LaunchVSCodeResult {
   electronApp: ElectronApplication;
@@ -122,8 +134,9 @@ export function getVSCodePath(): string {
  * Chat 뷰를 엽니다.
  */
 export async function openChatView(page: Page): Promise<void> {
-  // Command Palette 열기 (Ctrl+Shift+P)
-  await page.keyboard.press('Control+Shift+P');
+  // Command Palette 열기 (Ctrl+Shift+P / Cmd+Shift+P)
+  const modifier = getModifierKey();
+  await page.keyboard.press(`${modifier}+Shift+P`);
   await page.waitForTimeout(500);
 
   // Chat 열기 명령 입력
@@ -151,8 +164,9 @@ export async function startNewChat(page: Page): Promise<void> {
   // Chat 뷰 열기
   await openChatView(page);
 
-  // Command Palette로 새 Chat 시작
-  await page.keyboard.press('Control+N');
+  // Command Palette로 새 Chat 시작 (Ctrl+N / Cmd+N)
+  const modifier = getModifierKey();
+  await page.keyboard.press(`${modifier}+N`);
   await page.waitForTimeout(2000);
 }
 
@@ -201,8 +215,9 @@ export async function sendChatMessage(
   await inputContainer.click({ force: true });
   await page.waitForTimeout(300);
 
-  // 혹시 기존 텍스트가 있으면 모두 선택 후 삭제
-  await page.keyboard.press('Control+A');
+  // 혹시 기존 텍스트가 있으면 모두 선택 후 삭제 (Ctrl+A / Cmd+A)
+  const modifier = getModifierKey();
+  await page.keyboard.press(`${modifier}+A`);
   await page.keyboard.press('Backspace');
   await page.waitForTimeout(100);
 
@@ -416,8 +431,9 @@ export async function checkTerminalOpened(
  */
 export async function closeAllTerminals(page: Page): Promise<void> {
   try {
-    // Command Palette로 모든 터미널 종료
-    await page.keyboard.press('Control+Shift+P');
+    // Command Palette로 모든 터미널 종료 (Ctrl+Shift+P / Cmd+Shift+P)
+    const modifier = getModifierKey();
+    await page.keyboard.press(`${modifier}+Shift+P`);
     await page.waitForTimeout(500);
 
     await page.keyboard.type('Terminal: Kill All Terminals');
