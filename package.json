@@ -66,6 +66,27 @@
             "description": "Open interactive CLI terminal with current session"
           }
         ]
+      },
+      {
+        "id": "copilot-cli-agents.codex",
+        "fullName": "Codex",
+        "name": "codex",
+        "description": "OpenAI Codex AI Assistant",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "doctor",
+            "description": "Check Codex CLI installation status"
+          },
+          {
+            "name": "session",
+            "description": "Show current chat session ID"
+          },
+          {
+            "name": "handoff",
+            "description": "Open interactive CLI terminal with current session"
+          }
+        ]
       }
     ],
     "commands": [
@@ -99,29 +120,42 @@
           "default": "haiku",
           "description": "Select the model for Claude CLI."
         },
-        "CCA.claude.allowedTools": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "WebSearch",
-            "WebFetch",
-            "Bash"
-          ],
-          "markdownDescription": "List of tools available for Claude CLI. Examples: `WebSearch`, `WebFetch`, `Bash`, `Edit`."
+        "CCA.claude.useWebSearch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable web search capability for Claude CLI."
         },
-        "CCA.gemini.allowedTools": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "google_web_search",
-            "web_fetch",
-            "run_shell_command"
+        "CCA.gemini.useWebSearch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable web search capability for Gemini CLI."
+        },
+        "CCA.codex.model": {
+          "type": "string",
+          "enum": [
+            "gpt-5.2-codex",
+            "gpt-5.1-codex-max",
+            "gpt-5.1-codex-mini",
+            "gpt-5.2"
           ],
-          "markdownDescription": "List of tools available for Gemini CLI. Examples: `google_web_search`, `web_fetch`, `run_shell_command`."
+          "default": "gpt-5.2-codex",
+          "description": "Select the model for Codex CLI."
+        },
+        "CCA.codex.reasoningEffort": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "extra-high"
+          ],
+          "default": "low",
+          "description": "Select the reasoning effort level for Codex CLI."
+        },
+        "CCA.codex.useWebSearch": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable web search capability for Codex CLI."
         }
       }
     }

@@ -1,6 +1,14 @@
-# Copilot CLI Agents
+<div align="center">
+    <img src="./assets/icon.png" alt="CLI Agents Logo" width="200" height="200"/>
+    <h1>Github Copilot CLI Agents</h1>
+    <h3><em>One chat. Every AI.</em></h3>
+</div>
 
-Copilot extension for integrating multiple Code Agent CLIs directly into VS Code Copilot Chat.
+<p align="center">
+    <strong>Copilot extension for integrating multiple Code Agent CLIs directly into VS Code Copilot Chat.</strong>
+</p>
+
+---
 
 ## Introduction
 
@@ -18,6 +26,7 @@ On the other hand, pure models like Gemini and Claude (such as Sonnet 4.5 with i
 
 - **@gemini**: Google Gemini AI Assistant
 - **@claude**: Anthropic Claude AI Assistant
+- **@codex**: OpenAI Codex AI Assistant
 
 ### Slash Commands
 
@@ -39,9 +48,9 @@ On the other hand, pure models like Gemini and Claude (such as Sonnet 4.5 with i
 
 ## Quick Start
 
-1. Install and log in to [Gemini CLI](https://geminicli.com/) or [Claude Code](https://claude.com/product/claude-code)
+1. Install and log in to [Gemini CLI](https://geminicli.com/), [Claude Code](https://claude.com/product/claude-code), or [Codex CLI](https://github.com/openai/codex)
 2. Open GitHub Copilot Chat in VS Code
-3. Type `@gemini` or `@claude` followed by your query
+3. Type `@gemini`, `@claude`, or `@codex` followed by your query
 
 ## Important Notes
 

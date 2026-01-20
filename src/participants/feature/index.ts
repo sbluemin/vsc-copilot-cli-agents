@@ -8,4 +8,5 @@ export * from './utils';
 
 // Participant 팩토리 함수
 export { createClaudeParticipant } from './claude';
+export { createCodexParticipant } from './codex';
 export { createGeminiParticipant } from './gemini';
