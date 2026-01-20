@@ -172,6 +172,9 @@ export class CodexCliRunner extends SpawnCliRunner {
       // 출력 형식 (resume 전에)
       args.push(...this.getArgumentOutputFormat());
 
+      // 웹 검색 옵션 (resume 전에)
+      args.push(...this.getArgumentAllowedTools());
+
       // 모델 옵션 (resume 전에)
       args.push(...this.getArgumentModel());
 
@@ -187,6 +190,9 @@ export class CodexCliRunner extends SpawnCliRunner {
 
       // 출력 형식
       args.push(...this.getArgumentOutputFormat());
+
+      // 웹 검색 옵션
+      args.push(...this.getArgumentAllowedTools());
 
       // 모델 옵션
       args.push(...this.getArgumentModel());

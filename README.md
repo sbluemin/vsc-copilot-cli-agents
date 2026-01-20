@@ -1,6 +1,6 @@
 <div align="center">
     <img src="./assets/icon.png" alt="CLI Agents Logo" width="200" height="200"/>
-    <h1>Github Copilot CLI Agents</h1>
+    <h1>GitHub Copilot CLI Agents</h1>
     <h3><em>One chat. Every AI.</em></h3>
 </div>
 
