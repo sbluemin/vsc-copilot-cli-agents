@@ -1,9 +1,68 @@
-import { Page } from '@playwright/test';
+import { Page, _electron as electron, ElectronApplication } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 
 // 스크린샷 저장 경로
 export const screenshotDir = path.join(__dirname, '..', 'screenshots');
+
+// 테스트용 사용자 데이터 디렉토리 (워크스페이스 루트의 .vscode/test-user-data)
+export const testUserDataDir = path.resolve(__dirname, '../../../.vscode/.e2e-test-user-data');
+
+// 테스트용 워크스페이스 경로
+export const testWorkspacePath = path.resolve(__dirname, '../../../.vscode/extensionDevTestWorkspace');
+
+// 확장 개발 경로
+export const extensionDevPath = path.resolve(__dirname, '../../../');
+
+// ============================================================================
+// VS Code 실행 헬퍼
+// ============================================================================
+
+/**
+ * VS Code 실행 결과
+ */
+export interface LaunchVSCodeResult {
+  electronApp: ElectronApplication;
+  page: Page;
+}
+
+/**
+ * E2E 테스트용 VS Code를 실행합니다.
+ * launch.json의 'Run Code with E2E environment'와 동일한 설정 사용
+ *
+ * @returns ElectronApplication과 Page 객체
+ */
+export async function launchVSCode(): Promise<LaunchVSCodeResult> {
+  // 스크린샷 디렉토리 생성
+  if (!fs.existsSync(screenshotDir)) {
+    fs.mkdirSync(screenshotDir, { recursive: true });
+  }
+
+  // VS Code 실행 경로
+  const vscodePath = getVSCodePath();
+
+  // VS Code 실행 (launch.json의 'Run Code with E2E environment'와 동일한 인자)
+  const electronApp = await electron.launch({
+    executablePath: vscodePath,
+    args: [
+      '--extensionDevelopmentPath=' + extensionDevPath,
+      '--user-data-dir=' + testUserDataDir,
+      '--profile=dev-vsc-copilot-cli',
+      '--disable-workspace-trust',
+      testWorkspacePath,
+    ],
+    timeout: 60_000,
+  });
+
+  // 첫 번째 윈도우 가져오기
+  const page = await electronApp.firstWindow();
+
+  // VS Code가 완전히 로드될 때까지 대기
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForTimeout(5000);
+
+  return { electronApp, page };
+}
 
 // ============================================================================
 // VS Code 경로 헬퍼

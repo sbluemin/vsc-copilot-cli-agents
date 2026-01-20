@@ -9,11 +9,13 @@ export * from './types';
 export { doctorCommand } from './feature/doctor';
 export { sessionCommand } from './feature/session';
 export { handoffCommand } from './feature/handoff';
+export { passAgentCommand } from './feature/passAgent';
 
 import { ParticipantCommand } from './types';
 import { doctorCommand } from './feature/doctor';
 import { sessionCommand } from './feature/session';
 import { handoffCommand } from './feature/handoff';
+import { passAgentCommand } from './feature/passAgent';
 
 /**
  * 등록된 모든 Participant 커맨드 목록
@@ -22,6 +24,7 @@ export const participantCommands: ParticipantCommand[] = [
   doctorCommand,
   sessionCommand,
   handoffCommand,
+  passAgentCommand,
 ];
 
 /**

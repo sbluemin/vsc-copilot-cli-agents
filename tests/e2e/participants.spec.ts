@@ -1,19 +1,18 @@
 import {
   test,
   expect,
-  _electron as electron,
   ElectronApplication,
   Page,
 } from '@playwright/test';
 import * as path from 'path';
-import * as fs from 'fs';
 import {
-  getVSCodePath,
+  launchVSCode,
   openChatView,
   sendChatMessage,
   waitForChatResponse,
   getChatResponseText,
   screenshotDir,
+  startNewChat,
 } from './helpers';
 
 /**
@@ -29,42 +28,13 @@ test.describe('Chat Participants', () => {
   let page: Page;
 
   test.beforeAll(async () => {
-    // 스크린샷 디렉토리 생성
-    if (!fs.existsSync(screenshotDir)) {
-      fs.mkdirSync(screenshotDir, { recursive: true });
-    }
-
-    // VS Code 실행 경로 (시스템에 따라 수정 필요)
-    const vscodePath = getVSCodePath();
-
-    // 테스트용 임시 사용자 데이터 디렉토리
-    const userDataDir = path.join(__dirname, '.vscode-test-user-data');
-
-    // VS Code 실행
-    electronApp = await electron.launch({
-      executablePath: vscodePath,
-      args: [
-        // 익스텐션 개발 호스트 모드
-        '--extensionDevelopmentPath=' + path.resolve(__dirname, '../..'),
-        "--profile=dev-vsc-copilot-cli",
-        // 사용자 데이터 디렉토리 분리
-        '--user-data-dir=' + userDataDir,
-        // 테스트용 워크스페이스 열기
-        path.resolve(__dirname, '../../.vscode/extensionDevTestWorkspace')
-      ],
-      timeout: 60_000,
-    });
-
-    // 첫 번째 윈도우 가져오기
-    page = await electronApp.firstWindow();
-
-    // VS Code가 완전히 로드될 때까지 대기
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(5000); // 추가 로딩 시간
+    // VS Code 실행 (공통 헬퍼 사용)
+    const result = await launchVSCode();
+    electronApp = result.electronApp;
+    page = result.page;
   });
 
   test.afterAll(async () => {
-    // 앱 종료
     if (electronApp) {
       await electronApp.close();
     }
@@ -73,9 +43,13 @@ test.describe('Chat Participants', () => {
   test.afterEach(async ({}, testInfo) => {
     // 테스트 실패 시 스크린샷 저장
     if (testInfo.status !== 'passed') {
+      // 테스트 제목에서 파일명으로 사용 불가능한 문자 제거
+      const sanitizedTitle = testInfo.title
+        .replace(/\s+/g, '-')
+        .replace(/[\/\\:*?"<>|]/g, '_');
       const screenshotPath = path.join(
         screenshotDir,
-        `${testInfo.title.replace(/\s+/g, '-')}-failure.png`
+        `${sanitizedTitle}-failure.png`
       );
       await page.screenshot({ path: screenshotPath });
     }
@@ -87,8 +61,8 @@ test.describe('Chat Participants', () => {
    * @claude에게 간단한 질문을 하고 응답을 확인합니다.
    */
   test('테스트: Claude 기본 프롬프트 테스트', async () => {
-    // Chat 뷰 열기
-    await openChatView(page);
+    // 새 Chat 시작
+    await startNewChat(page);
 
     // 테스트 프롬프트 전송
     const testPrompt = 'Say "Hello Claude" and nothing else.';
@@ -113,8 +87,8 @@ test.describe('Chat Participants', () => {
    * @gemini에게 간단한 질문을 하고 응답을 확인합니다.
    */
   test('테스트: Gemini 기본 프롬프트 테스트', async () => {
-    // Chat 뷰 열기
-    await openChatView(page);
+    // 새 Chat 시작
+    await startNewChat(page);
 
     // 테스트 프롬프트 전송
     const testPrompt = 'Say "Hello Gemini" and nothing else.';

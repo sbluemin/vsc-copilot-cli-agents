@@ -11,6 +11,7 @@
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
         "--profile=dev-vsc-copilot-cli",
+        "--disable-workspace-trust",
         "${workspaceFolder}/.vscode/extensionDevTestWorkspace"
       ],
       "outFiles": [
@@ -22,6 +23,19 @@
       ],
       "sourceMaps": true,
       "preLaunchTask": "${defaultBuildTask}"
+    },
+    {
+      "name": "Run Code with E2E environment",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "code",
+      "runtimeArgs": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--user-data-dir=${workspaceFolder}/.vscode/.e2e-test-user-data",
+        "--profile=dev-vsc-copilot-cli",
+        "--disable-workspace-trust",
+        "${workspaceFolder}/.vscode/extensionDevTestWorkspace"
+      ]
     },
     {
       "name": "Run test E2E",

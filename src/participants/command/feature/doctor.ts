@@ -4,7 +4,28 @@
  */
 
 import { formatHealthReport } from '../../../cli/utils';
+import { CliHealthStatus, DoctorResult, CliRunner } from '../../../cli/types';
 import { ParticipantCommand, CommandContext } from '../types';
+
+/**
+ * CLI 상태 검증 실행
+ * @param cliRunner - CLI Runner 인스턴스
+ * @returns Doctor 검증 결과
+ */
+async function runDoctor(cliRunner: CliRunner): Promise<DoctorResult> {
+  const install = await cliRunner.checkInstallation();
+
+  const status: CliHealthStatus = {
+    cli: cliRunner.name,
+    install,
+    checkedAt: new Date(),
+  };
+
+  return {
+    status,
+    installGuidance: cliRunner.getInstallGuidance(),
+  };
+}
 
 /**
  * doctor 커맨드 핸들러
@@ -17,7 +38,8 @@ async function handleDoctor(ctx: CommandContext): Promise<boolean> {
 
   try {
     stream.progress(`🔍 Checking ${name} CLI status...`);
-    const result = await cliRunner.doctor();
+    const result = await runDoctor(cliRunner);
+
     const report = formatHealthReport(result);
     stream.markdown(report);
   } catch (error) {

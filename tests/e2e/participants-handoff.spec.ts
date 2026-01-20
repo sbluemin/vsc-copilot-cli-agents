@@ -1,14 +1,12 @@
 import {
   test,
   expect,
-  _electron as electron,
   ElectronApplication,
   Page,
 } from '@playwright/test';
 import * as path from 'path';
-import * as fs from 'fs';
 import {
-  getVSCodePath,
+  launchVSCode,
   openChatView,
   startNewChat,
   sendChatMessage,
@@ -34,35 +32,10 @@ test.describe('Handoff Command', () => {
   let page: Page;
 
   test.beforeAll(async () => {
-    // 스크린샷 디렉토리 생성
-    if (!fs.existsSync(screenshotDir)) {
-      fs.mkdirSync(screenshotDir, { recursive: true });
-    }
-
-    // VS Code 실행 경로
-    const vscodePath = getVSCodePath();
-
-    // 테스트용 임시 사용자 데이터 디렉토리
-    const userDataDir = path.join(__dirname, '.vscode-test-user-data');
-
-    // VS Code 실행
-    electronApp = await electron.launch({
-      executablePath: vscodePath,
-      args: [
-        '--extensionDevelopmentPath=' + path.resolve(__dirname, '../..'),
-        '--profile=dev-vsc-copilot-cli',
-        '--user-data-dir=' + userDataDir,
-        path.resolve(__dirname, '../../.vscode/extensionDevTestWorkspace'),
-      ],
-      timeout: 60_000,
-    });
-
-    // 첫 번째 윈도우 가져오기
-    page = await electronApp.firstWindow();
-
-    // VS Code가 완전히 로드될 때까지 대기
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(5000);
+    // VS Code 실행 (공통 헬퍼 사용)
+    const result = await launchVSCode();
+    electronApp = result.electronApp;
+    page = result.page;
   });
 
   test.afterAll(async () => {
@@ -96,9 +69,6 @@ test.describe('Handoff Command', () => {
    * "No Active Session" 에러 메시지가 표시되어야 합니다.
    */
   test('테스트: Claude handoff 커맨드 - 세션 없이 실행', async () => {
-    // Chat 뷰 열기
-    await openChatView(page);
-
     // 새 Chat 시작 (세션 없는 상태 보장)
     await startNewChat(page);
 
@@ -128,9 +98,6 @@ test.describe('Handoff Command', () => {
    * 터미널이 열리고 "Handoff Successful" 메시지가 표시되어야 합니다.
    */
   test('테스트: Claude handoff 커맨드 - 세션 있을 때 실행', async () => {
-    // Chat 뷰 열기
-    await openChatView(page);
-
     // 새 Chat 시작
     await startNewChat(page);
 
@@ -172,9 +139,6 @@ test.describe('Handoff Command', () => {
    * "No Active Session" 에러 메시지가 표시되어야 합니다.
    */
   test('테스트: Gemini handoff 커맨드 - 세션 없이 실행', async () => {
-    // Chat 뷰 열기
-    await openChatView(page);
-
     // 새 Chat 시작
     await startNewChat(page);
 
@@ -204,9 +168,6 @@ test.describe('Handoff Command', () => {
    * 터미널이 열리고 "Handoff Successful" 메시지가 표시되어야 합니다.
    */
   test('테스트: Gemini handoff 커맨드 - 세션 있을 때 실행', async () => {
-    // Chat 뷰 열기
-    await openChatView(page);
-
     // 새 Chat 시작
     await startNewChat(page);
 
