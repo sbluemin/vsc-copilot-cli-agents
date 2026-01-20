@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import { ParticipantConfig } from './types';
 import { createParticipantHandler } from './handler';
 import { createClaudeParticipant } from './feature/claude';
+import { createCodexParticipant } from './feature/codex';
 import { createGeminiParticipant } from './feature/gemini';
 
 /** Participant 생성 함수 타입 */
@@ -15,6 +16,7 @@ type ParticipantFactory = () => ParticipantConfig;
 const participantFactories: ParticipantFactory[] = [
   createGeminiParticipant,
   createClaudeParticipant,
+  createCodexParticipant,
 ];
 
 /**

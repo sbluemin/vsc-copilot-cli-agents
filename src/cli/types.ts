@@ -108,6 +108,68 @@ export interface ClaudeStreamMessage {
 }
 
 /**
+ * Codex JSONL 이벤트 타입
+ * @see https://github.com/openai/codex
+ */
+export type CodexEventType =
+  | 'thread.started'
+  | 'turn.started'
+  | 'turn.completed'
+  | 'item.started'
+  | 'item.completed';
+
+/**
+ * Codex item 타입
+ */
+export type CodexItemType =
+  | 'reasoning'
+  | 'command_execution'
+  | 'agent_message'
+  | 'mcp_tool_call';
+
+/**
+ * Codex item 구조
+ */
+export interface CodexItem {
+  /** 아이템 ID */
+  id?: string;
+  /** 아이템 타입 */
+  type: CodexItemType;
+  /** 텍스트 내용 (reasoning, agent_message) */
+  text?: string;
+  /** 실행된 명령어 (command_execution) */
+  command?: string;
+  /** 명령어 출력 (command_execution) */
+  aggregated_output?: string;
+  /** 종료 코드 (command_execution) */
+  exit_code?: number | null;
+  /** 상태 */
+  status?: 'in_progress' | 'completed' | 'failed';
+  /** MCP 도구 이름 (mcp_tool_call) */
+  tool?: string;
+  /** MCP 서버 이름 (mcp_tool_call) */
+  server?: string;
+}
+
+/**
+ * Codex JSONL 스트림 메시지
+ */
+export interface CodexStreamMessage {
+  /** 이벤트 타입 */
+  type: CodexEventType;
+  /** 스레드(세션) ID - thread.started에서 제공 */
+  thread_id?: string;
+  /** 아이템 정보 - item.started, item.completed에서 제공 */
+  item?: CodexItem;
+  /** 사용량 정보 - turn.completed에서 제공 */
+  usage?: {
+    input_tokens?: number;
+    cached_input_tokens?: number;
+    output_tokens?: number;
+  };
+}
+
+/**
  * CLI 설치 상태
  */
 export type InstallStatus = 'installed' | 'not_installed' | 'unknown';

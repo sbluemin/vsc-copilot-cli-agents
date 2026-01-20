@@ -17,8 +17,9 @@ export class ClaudeCliRunner extends SpawnCliRunner {
 
   getArgumentAllowedTools(): string[] {
     const config = vscode.workspace.getConfiguration('CCA');
-    const allowedTools = config.get<string[]>('claude.allowedTools', []);
-    return allowedTools.length > 0 ? ['--allowed-tools', allowedTools.join(',')] : [];
+    const useWebSearch = config.get<boolean>('claude.useWebSearch', false);
+    // useWebSearch가 활성화되면 WebSearch, WebFetch 도구 추가
+    return useWebSearch ? ['--allowed-tools', 'WebSearch,WebFetch'] : [];
   }
 
   getArgumentModel(): string[] {
