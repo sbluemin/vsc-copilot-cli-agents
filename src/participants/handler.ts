@@ -23,6 +23,13 @@ export function createParticipantHandler(
   ): Promise<void> => {
     const { cliRunner, name } = config;
 
+    // Claude 전용: modeInstructions2 처리 (이외의 CLI는 '/passAgent' 커맨드 사용)
+    let modeInstructions: ModeInstructions | undefined;
+    if (cliRunner.name === 'claude') {
+      modeInstructions = (request as ExtendedChatRequest).modeInstructions2;
+    }
+
+
     // 커맨드 처리: 등록된 커맨드 찾기 및 실행
     if (request.command) {
       const command = findCommand(request.command);
@@ -33,6 +40,7 @@ export function createParticipantHandler(
           stream, 
           token, 
           config, 
+          modeInstructions,
           prompt: request.prompt || undefined
         };
         const handled = await command.handler(ctx);
@@ -40,12 +48,6 @@ export function createParticipantHandler(
           return;
         }
       }
-    }
-
-    // Claude 전용: modeInstructions2 처리 (이외의 CLI는 '/passAgent' 커맨드 사용)
-    let modeInstructions: ModeInstructions | undefined;
-    if (cliRunner.name === 'claude') {
-      modeInstructions = (request as ExtendedChatRequest).modeInstructions2;
     }
 
     // 일반 처리: CLI 실행

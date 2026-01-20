@@ -6,7 +6,6 @@
 import * as vscode from 'vscode';
 import { ParticipantCommand, CommandContext } from '../types';
 import { ChatSessionManager } from '../../session';
-import { ExtendedChatRequest } from '../../types';
 
 /**
  * handoff 커맨드 핸들러
@@ -14,10 +13,9 @@ import { ExtendedChatRequest } from '../../types';
  * @returns 커맨드 처리 완료 여부
  */
 async function handleHandoff(ctx: CommandContext): Promise<boolean> {
-  const { context, stream, config, request} = ctx;
+  const { context, stream, config, modeInstructions} = ctx;
   const { cliRunner, name, iconPath } = config;
 
-  const modeInstructions = (request as ExtendedChatRequest).modeInstructions2;
   const sessionId = ChatSessionManager.findSessionId(context.history);
 
   if (!sessionId) {
@@ -37,13 +35,16 @@ async function handleHandoff(ctx: CommandContext): Promise<boolean> {
       ...cliRunner.getArgumentPrompt({ modeInstructions, prompt: undefined }),
     ].join(' ');
 
-    // 에디터 사이드 영역에 터미널 생성
+    // 에디터 사이드 영역에 터미널 생성 (Windows에서는 cmd 사용)
     const terminal = vscode.window.createTerminal({
       name: `${name} CLI`,
       location: {
         viewColumn: vscode.ViewColumn.Beside,
       },
       iconPath,
+      ...(process.platform === 'win32' && {
+        shellPath: 'cmd.exe',
+      }),
     });
     terminal.show();
     terminal.sendText(cliCommand);

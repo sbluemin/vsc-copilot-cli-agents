@@ -12,3 +12,4 @@ node_modules
 **/screenshots/
 **/test-results/
 **/playwright-report/
+**/.e2e-test-user-data
