@@ -125,11 +125,6 @@
           "default": false,
           "description": "Enable web search capability for Claude CLI."
         },
-        "CCA.gemini.useWebSearch": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable web search capability for Gemini CLI."
-        },
         "CCA.codex.model": {
           "type": "string",
           "enum": [

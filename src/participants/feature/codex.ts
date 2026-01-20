@@ -19,8 +19,9 @@ export class CodexCliRunner extends SpawnCliRunner {
   getArgumentAllowedTools(): string[] {
     const config = vscode.workspace.getConfiguration('CCA');
     const useWebSearch = config.get<boolean>('codex.useWebSearch', false);
-    // Codex CLI는 --search 옵션으로 웹 검색 활성화
-    return useWebSearch ? ['--search'] : [];
+    
+    // --enable 옵션으로 web_search_request feature 활성화
+    return useWebSearch ? ['--enable', 'web_search_request'] : [];
   }
 
   getArgumentModel(): string[] {

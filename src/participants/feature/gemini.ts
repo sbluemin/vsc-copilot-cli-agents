@@ -16,10 +16,8 @@ export class GeminiCliRunner extends SpawnCliRunner {
   }
 
   getArgumentAllowedTools(): string[] {
-    const config = vscode.workspace.getConfiguration('CCA');
-    const useWebSearch = config.get<boolean>('gemini.useWebSearch', false);
-    // useWebSearch가 활성화되면 google_web_search, web_fetch 도구 추가
-    return useWebSearch ? ['--allowed-tools', 'google_web_search,web_fetch'] : [];
+    // Gemini CLI는 기본적으로 웹 검색이 활성화되어 있음
+    return [];
   }
 
   getArgumentModel(): string[] {
