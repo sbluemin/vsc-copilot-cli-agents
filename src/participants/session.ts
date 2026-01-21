@@ -35,7 +35,8 @@ export class ChatSessionManager {
           if (part instanceof vscode.ChatResponseMarkdownPart) {
             const match = part.value.value.match(SESSION_MARKER_PATTERN);
             if (match) {
-              return match[1];
+              // URL 디코딩하여 원래 세션 ID 반환
+              return decodeURIComponent(match[1]);
             }
           }
         }
@@ -46,11 +47,14 @@ export class ChatSessionManager {
 
   /**
    * 세션 ID를 스트림에 마커로 저장
+   * 특수문자가 포함된 ID는 URL 인코딩하여 마크다운 링크 문법 오류 방지
    * @param stream - Chat response stream
    * @param sessionId - 저장할 세션 ID
    */
   static saveSessionId(stream: vscode.ChatResponseStream, sessionId: string): void {
-    stream.markdown(`\n[](cca:${sessionId})`);
+    // URL 인코딩으로 특수문자 처리 (마크다운 링크 파싱 오류 방지)
+    const encodedId = encodeURIComponent(sessionId);
+    stream.markdown(`[](cca:${encodedId})`);
   }
 
   /**
@@ -69,7 +73,8 @@ export class ChatSessionManager {
           if (part instanceof vscode.ChatResponseMarkdownPart) {
             const match = part.value.value.match(AGENT_MARKER_PATTERN);
             if (match) {
-              return match[1];
+              // URL 디코딩하여 원래 Agent 이름 반환
+              return decodeURIComponent(match[1]);
             }
           }
         }
@@ -80,11 +85,14 @@ export class ChatSessionManager {
 
   /**
    * Agent 이름을 스트림에 마커로 저장
+   * 공백 등 특수문자가 포함된 이름은 URL 인코딩하여 마크다운 링크 문법 오류 방지
    * @param stream - Chat response stream
    * @param agentName - 저장할 Agent 이름
    */
   static saveAgentName(stream: vscode.ChatResponseStream, agentName: string): void {
-    stream.markdown(`\n[](cca-agent:${agentName})`);
+    // URL 인코딩으로 공백 및 특수문자 처리 (마크다운 링크 파싱 오류 방지)
+    const encodedName = encodeURIComponent(agentName);
+    stream.markdown(`[](cca-agent:${encodedName})`);
   }
 
   /**

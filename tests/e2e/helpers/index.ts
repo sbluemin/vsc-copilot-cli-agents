@@ -450,3 +450,30 @@ export async function closeAllTerminals(page: Page): Promise<void> {
     console.log('터미널 닫기 실패, 계속 진행합니다.');
   }
 }
+
+// ============================================================================
+// Custom Agent 헬퍼
+// ============================================================================
+
+/**
+ * Custom Agent를 선택하여 새 Chat을 시작합니다.
+ * @param page - Playwright Page
+ * @param agentName - Custom Agent 이름 (예: "Test Agent")
+ */
+export async function startNewChatWithCustomAgent(
+  page: Page,
+  agentName: string
+): Promise<void> {
+  // Command Palette 열기 (Ctrl+Shift+P / Cmd+Shift+P)
+  const modifier = getModifierKey();
+  await page.keyboard.press(`${modifier}+Shift+P`);
+  await page.waitForTimeout(500);
+
+  // 'Chat: Open Chat (<Agent Name>)' 입력
+  await page.keyboard.type(`Chat: Open Chat (${agentName})`);
+  await page.waitForTimeout(500);
+  await page.keyboard.press('Enter');
+
+  // Chat이 열릴 때까지 대기
+  await page.waitForTimeout(2000);
+}

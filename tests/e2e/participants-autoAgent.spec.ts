@@ -11,6 +11,7 @@ import {
   waitForChatResponse,
   getChatResponseText,
   screenshotDir,
+  startNewChatWithCustomAgent,
 } from './helpers';
 
 /**
@@ -55,20 +56,11 @@ test.describe('Auto Agent Instructions', () => {
   });
 
   /**
-   * Custom Agent (Test Agent)를 선택하여 새 Chat을 시작합니다.
+   * Test Agent로 새 Chat을 시작합니다.
+   * 공통 헬퍼 startNewChatWithCustomAgent를 래핑합니다.
    */
   async function startNewChatWithTestAgent(): Promise<void> {
-    // Command Palette 열기
-    await page.keyboard.press('Control+Shift+P');
-    await page.waitForTimeout(500);
-
-    // 'Chat: Open Chat (Test Agent)' 입력
-    await page.keyboard.type('Chat: Open Chat (Test Agent)');
-    await page.waitForTimeout(500);
-    await page.keyboard.press('Enter');
-
-    // Chat이 열릴 때까지 대기
-    await page.waitForTimeout(2000);
+    await startNewChatWithCustomAgent(page, 'Test Agent');
   }
 
   /**
