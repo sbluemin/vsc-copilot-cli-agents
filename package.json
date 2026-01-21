@@ -142,7 +142,7 @@
             "low",
             "medium",
             "high",
-            "extra-high"
+            "xhigh"
           ],
           "default": "low",
           "description": "Select the reasoning effort level for Codex CLI."
