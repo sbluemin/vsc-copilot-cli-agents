@@ -72,6 +72,11 @@ export async function runCliWithStreaming(options: RunCliOptions): Promise<boole
   // 기존 세션 ID 검색
   const existingSessionId = ChatSessionManager.findSessionId(history);
 
+  // Agent 지침 전달 여부 결정 (동일 Agent면 중복 전달 안함)
+  const currentAgentName = modeInstructions?.name;
+  const shouldPassInstructions = ChatSessionManager.shouldPassAgentInstructions(history, currentAgentName);
+  const effectiveModeInstructions = shouldPassInstructions ? modeInstructions : undefined;
+
   // AbortController 생성 (취소 토큰 연동)
   const abortController = new AbortController();
   const cancelDisposable = token.onCancellationRequested(() => abortController.abort());
@@ -83,7 +88,7 @@ export async function runCliWithStreaming(options: RunCliOptions): Promise<boole
   const result = await cliRunner.run(
     {
       prompt: resolvedPrompt,
-      modeInstructions: modeInstructions,
+      modeInstructions: effectiveModeInstructions,
       abortSignal: abortController.signal,
       resumeSessionId: existingSessionId,
     },
@@ -93,6 +98,11 @@ export async function runCliWithStreaming(options: RunCliOptions): Promise<boole
   // 새 세션 ID가 있고 기존 세션이 없을 경우, 다음 대화에서 찾을 수 있도록 마커 삽입
   if (result.sessionId && !existingSessionId) {
     ChatSessionManager.saveSessionId(stream, result.sessionId);
+  }
+
+  // Agent 이름이 변경되었으면 마커 저장 (다음 대화에서 중복 전달 방지)
+  if (currentAgentName && shouldPassInstructions) {
+    ChatSessionManager.saveAgentName(stream, currentAgentName);
   }
 
   // 이벤트 리스너 정리

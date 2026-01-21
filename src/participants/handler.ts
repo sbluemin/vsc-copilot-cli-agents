@@ -3,7 +3,7 @@
  */
 
 import * as vscode from 'vscode';
-import { ExtendedChatRequest, ModeInstructions, ParticipantConfig } from './types';
+import { ExtendedChatRequest, ParticipantConfig } from './types';
 import { findCommand, CommandContext } from './command';
 import { runCliWithStreaming } from './feature/utils';
 
@@ -23,12 +23,9 @@ export function createParticipantHandler(
   ): Promise<void> => {
     const { cliRunner, name } = config;
 
-    // Claude 전용: modeInstructions2 처리 (이외의 CLI는 '/passAgent' 커맨드 사용)
-    let modeInstructions: ModeInstructions | undefined;
-    if (cliRunner.name === 'claude') {
-      modeInstructions = (request as ExtendedChatRequest).modeInstructions2;
-    }
-
+    // Custom Agent 모드 지침 추출 (모든 CLI에서 자동 처리)
+    // 중복 전달 방지는 runCliWithStreaming 내부에서 히스토리 기반으로 처리됨
+    const modeInstructions = (request as ExtendedChatRequest).modeInstructions2;
 
     // 커맨드 처리: 등록된 커맨드 찾기 및 실행
     if (request.command) {
