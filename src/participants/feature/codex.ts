@@ -76,10 +76,10 @@ export class CodexCliRunner extends SpawnCliRunner {
     if (modeInstructions) {
       // 프롬팅 기법: 명확한 구분자로 모드 지침과 사용자 요청 구분
       finalPrompt = [
-        '<mode_instructions>',
+        '<ModeInstructions>',
         modeInstructions.name,
         modeInstructions.content,
-        '</mode_instructions>',
+        '</ModeInstructions>',
         '',
         '<user_request>',
         prompt ?? '',

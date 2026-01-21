@@ -3,9 +3,8 @@
  */
 
 import * as vscode from 'vscode';
-import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
-import { GeminiStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
-import { executeCommand } from '../../cli/spawnCliRunner';
+import { executeCommand, ParseResult, SpawnCliRunner } from '../../cli/spawnCliRunner';
+import { GeminiStreamMessage, HealthGuidance, InstallInfo, StreamContent } from '../../cli/types';
 import { ModeInstructions, ParticipantConfig } from '../types';
 
 export class GeminiCliRunner extends SpawnCliRunner {
@@ -56,14 +55,12 @@ export class GeminiCliRunner extends SpawnCliRunner {
     if (modeInstructions) {
       // 프롬프팅 기법: 명확한 구분자로 모드 지침과 사용자 요청 구분
       finalPrompt = [
-        '<mode_instructions>',
+        '<ModeInstructions>',
         modeInstructions.name,
         modeInstructions.content,
-        '</mode_instructions>',
+        '</ModeInstructions>',
         '',
-        '<user_request>',
-        prompt ?? '',
-        '</user_request>',
+        prompt ?? ''
       ].join('\n');
     }
 

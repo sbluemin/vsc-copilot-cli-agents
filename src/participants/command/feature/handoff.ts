@@ -13,7 +13,7 @@ import { ChatSessionManager } from '../../session';
  * @returns 커맨드 처리 완료 여부
  */
 async function handleHandoff(ctx: CommandContext): Promise<boolean> {
-  const { context, stream, config, modeInstructions} = ctx;
+  const { context, stream, config} = ctx;
   const { cliRunner, name, iconPath } = config;
 
   const sessionId = ChatSessionManager.findSessionId(context.history);
@@ -32,7 +32,6 @@ async function handleHandoff(ctx: CommandContext): Promise<boolean> {
       ...cliRunner.getArgumentModel(),
       ...cliRunner.getArgumentResume(sessionId),
       ...cliRunner.getArgumentDirectories(),
-      ...cliRunner.getArgumentPrompt({ modeInstructions, prompt: undefined }),
     ].join(' ');
 
     // 에디터 사이드 영역에 터미널 생성 (Windows에서는 cmd 사용)
