@@ -13,12 +13,38 @@ import {
   StreamCallback,
   StreamContent,
   CliRunner,
-  DoctorResult,
   InstallInfo,
   HealthGuidance,
-  CliHealthStatus,
 } from './types';
 import { ModeInstructions } from '../participants/types';
+
+/**
+ * 디버그 모드 활성화 여부 확인
+ */
+function isDebugEnabled(): boolean {
+  const debug = process.env.COPILOT_CLI_AGENTS_DEBUG;
+  return debug === '1' || debug === 'true';
+}
+
+/**
+ * 디버그 로그 출력 (디버그 모드일 때만)
+ * @param args - 로그 메시지 및 인자
+ */
+function logDebug(...args: unknown[]): void {
+  if (isDebugEnabled()) {
+    console.log('[CLI Debug]', ...args);
+  }
+}
+
+/**
+ * 디버그 에러 로그 출력 (디버그 모드일 때만)
+ * @param args - 에러 메시지 및 인자
+ */
+function logDebugError(...args: unknown[]): void {
+  if (isDebugEnabled()) {
+    console.error('[CLI Debug]', ...args);
+  }
+}
 
 /**
  * Windows 경로의 드라이브 문자를 대문자로 정규화
@@ -177,6 +203,32 @@ export abstract class SpawnCliRunner implements CliRunner {
   }
 
   /**
+   * 단일 라인 처리 (세션 ID 추출 및 콘텐츠 콜백)
+   * @param cleanLine - ANSI 제거된 깨끗한 라인
+   * @param context - 프로세스 컨텍스트
+   */
+  private processLine(cleanLine: string, context: ProcessContext): void {
+    try {
+      const parseResult = this.parseLineWithSession(cleanLine);
+
+      // 세션 ID 추출
+      if (parseResult.sessionId && !context.extractedSessionId.value) {
+        context.extractedSessionId.value = parseResult.sessionId;
+      }
+
+      if (parseResult.content) {
+        if (parseResult.content.type === 'text') {
+          context.fullContent.value += parseResult.content.content;
+        }
+        context.onContent(parseResult.content);
+      }
+    } catch (error) {
+      // JSON 파싱 실패는 무시하고 디버그 로그만 출력
+      logDebugError('Failed to parse line:', cleanLine, error);
+    }
+  }
+
+  /**
    * 데이터 청크 처리 (버퍼 분리)
    */
   private processChunkWithBuffer(
@@ -199,19 +251,7 @@ export abstract class SpawnCliRunner implements CliRunner {
         continue;
       }
 
-      const parseResult = this.parseLineWithSession(cleanLine);
-
-      // 세션 ID 추출
-      if (parseResult.sessionId && !context.extractedSessionId.value) {
-        context.extractedSessionId.value = parseResult.sessionId;
-      }
-
-      if (parseResult.content) {
-        if (parseResult.content.type === 'text') {
-          context.fullContent.value += parseResult.content.content;
-        }
-        context.onContent(parseResult.content);
-      }
+      this.processLine(cleanLine, context);
     }
   }
 
@@ -230,26 +270,21 @@ export abstract class SpawnCliRunner implements CliRunner {
   }
 
   /**
-   * 남은 버퍼 처리
+   * 남은 버퍼 처리 (stdout + stderr)
    */
   private processRemainingBuffer(context: ProcessContext): void {
-    if (!context.buffer.value.trim()) {
-      return;
+    // stdout 버퍼 처리
+    if (context.buffer.value.trim()) {
+      const cleanLine = this.cleanAnsi(context.buffer.value).trim();
+      this.processLine(cleanLine, context);
     }
 
-    const cleanLine = this.cleanAnsi(context.buffer.value).trim();
-    const parseResult = this.parseLineWithSession(cleanLine);
-
-    // 세션 ID 추출
-    if (parseResult.sessionId && !context.extractedSessionId.value) {
-      context.extractedSessionId.value = parseResult.sessionId;
-    }
-
-    if (parseResult.content) {
-      if (parseResult.content.type === 'text') {
-        context.fullContent.value += parseResult.content.content;
+    // stderr 버퍼 처리 (JSON 라인인 경우만)
+    if (context.stderrBuffer.value.trim()) {
+      const cleanLine = this.cleanAnsi(context.stderrBuffer.value).trim();
+      if (this.isLikelyJsonLine(cleanLine)) {
+        this.processLine(cleanLine, context);
       }
-      context.onContent(parseResult.content);
     }
   }
 
@@ -269,13 +304,11 @@ export abstract class SpawnCliRunner implements CliRunner {
     this.cleanupAbortListener(context);
     this.processRemainingBuffer(context);
 
-    if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
-      console.log('[CLI Debug] Process exited with code:', exitCode);
-      console.log('[CLI Debug] Full content length:', context.fullContent.value.length);
-      console.log('[CLI Debug] Content preview:', context.fullContent.value.substring(0, 200));
-      if (context.stderrContent.value) {
-        console.error('[CLI Debug] stderr content:', context.stderrContent.value);
-      }
+    logDebug('Process exited with code:', exitCode);
+    logDebug('Full content length:', context.fullContent.value.length);
+    logDebug('Content preview:', context.fullContent.value.substring(0, 200));
+    if (context.stderrContent.value) {
+      logDebugError('stderr content:', context.stderrContent.value);
     }
 
     if (exitCode === 0) {
@@ -285,9 +318,7 @@ export abstract class SpawnCliRunner implements CliRunner {
         sessionId: context.extractedSessionId.value,
       });
     } else {
-      if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
-        console.error('[CLI Error] Process failed with exit code:', exitCode);
-      }
+      logDebugError('Process failed with exit code:', exitCode);
       const errorDetails = context.stderrContent.value 
         ? `\nStderr: ${context.stderrContent.value}`
         : '';
@@ -332,9 +363,7 @@ export abstract class SpawnCliRunner implements CliRunner {
     childProcess.stderr?.on('data', (chunk: Buffer) => {
       const text = chunk.toString();
       context.stderrContent.value += text;
-      if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
-        console.error('[CLI stderr]', text);
-      }
+      logDebugError('[stderr]', text);
       // JSON 파싱 시도 (일부 CLI는 stderr로도 JSON 출력)
       this.processStderrChunk(chunk, context);
     });
@@ -383,11 +412,9 @@ export abstract class SpawnCliRunner implements CliRunner {
     const allArgs = args.map((arg) => this.escapeShellArg(arg));
 
     // 디버깅: 실제 실행되는 명령어 로깅 (환경 변수로 활성화)
-    if (process.env.COPILOT_CLI_AGENTS_DEBUG === '1' || process.env.COPILOT_CLI_AGENTS_DEBUG === 'true') {
-      console.log('[CLI Debug] Command:', command);
-      console.log('[CLI Debug] Args (raw):', JSON.stringify(args, null, 2));
-      console.log('[CLI Debug] All Args (escaped):', JSON.stringify(allArgs, null, 2));
-    }
+    logDebug('Command:', command);
+    logDebug('Args (raw):', JSON.stringify(args, null, 2));
+    logDebug('All Args (escaped):', JSON.stringify(allArgs, null, 2));
 
     return new Promise((resolve) => {
       const workingDir = normalizeWindowsDriveLetter(
