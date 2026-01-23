@@ -21,7 +21,7 @@ export interface CliOptions {
 /**
  * 스트리밍 콘텐츠 타입
  */
-export type StreamContentType = 'text' | 'tool_use' | 'tool_result';
+export type StreamContentType = 'text' | 'tool_use' | 'tool_result' | 'reasoning';
 
 /**
  * 스트리밍 콘텐츠

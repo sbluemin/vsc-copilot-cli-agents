@@ -260,8 +260,13 @@ export class CodexCliRunner extends SpawnCliRunner {
           }
         }
 
-        // reasoning: 추론 과정 (progress로 표시하지 않고 무시)
-        // 필요시 여기서 처리 가능
+        // reasoning: 추론 과정
+        else if (item.type === 'reasoning' && item.text) {
+          content = {
+            type: 'reasoning',
+            content: item.text,
+          };
+        }
       }
 
       // item.started 이벤트 처리 (tool_use 시작)

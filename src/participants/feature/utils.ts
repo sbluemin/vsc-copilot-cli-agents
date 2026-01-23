@@ -49,6 +49,9 @@ function handleStreamContent(
     case 'tool_result':
       stream.progress(`📥 Tool result from ${content.toolName || 'unknown'}:\n\`\`\`\n${content.content}\n\`\`\``);
       break;
+    case 'reasoning':
+      stream.progress(`💭 ${content.content}`);
+      break;
     default:
       stream.markdown(content.content);
   }
