@@ -4,9 +4,9 @@
 
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
-import { CodexStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
+import { CodexStreamMessage, StreamContent, InstallInfo, HealthGuidance, AgentInstructions } from '../../cli/types';
 import { executeCommand } from '../../cli/spawnCliRunner';
-import { ModeInstructions, ParticipantConfig } from '../types';
+import { ParticipantConfig } from '../types';
 
 export class CodexCliRunner extends SpawnCliRunner {
   readonly name = 'codex';
@@ -66,20 +66,20 @@ export class CodexCliRunner extends SpawnCliRunner {
     return args;
   }
 
-  getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[] {
-    const { modeInstructions, prompt } = options;
+  getArgumentPrompt(options: { agentInstructions?: AgentInstructions; prompt?: string }): string[] {
+    const { agentInstructions, prompt } = options;
 
     // Codex CLI는 --system-prompt 옵션이 없으므로
-    // 모드 지침을 사용자 프롬프트 앞에 추가하여 전달
+    // 에이전트 지침을 사용자 프롬프트 앞에 추가하여 전달
     let finalPrompt = prompt ?? '';
 
-    if (modeInstructions) {
-      // 프롬팅 기법: 명확한 구분자로 모드 지침과 사용자 요청 구분
+    if (agentInstructions) {
+      // 프롬팅 기법: 명확한 구분자로 에이전트 지침과 사용자 요청 구분
       finalPrompt = [
-        '<ModeInstructions>',
-        modeInstructions.name,
-        modeInstructions.content,
-        '</ModeInstructions>',
+        '<AgentInstructions>',
+        agentInstructions.name,
+        agentInstructions.content,
+        '</AgentInstructions>',
         '',
         '<user_request>',
         prompt ?? '',
@@ -154,7 +154,7 @@ export class CodexCliRunner extends SpawnCliRunner {
 
   protected buildCliOptions(options?: {
     resumeSessionId?: string;
-    modeInstructions?: ModeInstructions;
+    agentInstructions?: AgentInstructions;
     prompt?: string;
   }): { command: string; args: string[] } {
     const { resumeSessionId } = options ?? {};
@@ -183,7 +183,7 @@ export class CodexCliRunner extends SpawnCliRunner {
       args.push(...this.getArgumentResume(resumeSessionId));
 
       // 프롬프트 (마지막에 추가)
-      args.push(...this.getArgumentPrompt({ modeInstructions: options?.modeInstructions, prompt: options?.prompt }));
+      args.push(...this.getArgumentPrompt({ agentInstructions: options?.agentInstructions, prompt: options?.prompt }));
     } else {
       // 일반 exec 모드
       // 디렉토리 옵션
@@ -199,7 +199,7 @@ export class CodexCliRunner extends SpawnCliRunner {
       args.push(...this.getArgumentModel());
 
       // 프롬프트 (마지막에 추가)
-      args.push(...this.getArgumentPrompt({ modeInstructions: options?.modeInstructions, prompt: options?.prompt }));
+      args.push(...this.getArgumentPrompt({ agentInstructions: options?.agentInstructions, prompt: options?.prompt }));
     }
 
     return {

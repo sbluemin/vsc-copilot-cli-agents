@@ -5,7 +5,6 @@
  * shell: true 옵션으로 Windows의 .cmd 래퍼와 Unix 셸 스크립트를 모두 지원합니다.
  */
 
-import * as vscode from 'vscode';
 import { spawn, ChildProcess } from 'child_process';
 import {
   CliOptions,
@@ -15,8 +14,8 @@ import {
   CliRunner,
   InstallInfo,
   HealthGuidance,
+  AgentInstructions,
 } from './types';
-import { ModeInstructions } from '../participants/types';
 
 /**
  * 디버그 모드 활성화 여부 확인
@@ -153,7 +152,7 @@ export abstract class SpawnCliRunner implements CliRunner {
   abstract getArgumentDirectories(): string[];
 
   abstract getArgumentPrompt(options: { 
-    modeInstructions?: ModeInstructions; 
+    agentInstructions?: AgentInstructions; 
     prompt?: string 
   }): string[];
 
@@ -176,7 +175,7 @@ export abstract class SpawnCliRunner implements CliRunner {
    */
   protected abstract buildCliOptions(options?: {
     resumeSessionId?: string;
-    modeInstructions?: ModeInstructions;
+    agentInstructions?: AgentInstructions;
     prompt?: string;
   }): { command: string; args: string[] };
 
@@ -405,8 +404,8 @@ export abstract class SpawnCliRunner implements CliRunner {
    * CLI 실행 (스트리밍)
    */
   async run(options: CliOptions, onContent: StreamCallback): Promise<CliResult> {
-    const { prompt, modeInstructions, abortSignal, resumeSessionId } = options;
-    const { command, args } = this.buildCliOptions({ resumeSessionId, modeInstructions, prompt });
+    const { prompt, agentInstructions, abortSignal, resumeSessionId, cwd } = options;
+    const { command, args } = this.buildCliOptions({ resumeSessionId, agentInstructions, prompt });
 
     // shell: true 사용 시 모든 인자에 셸 이스케이프 적용 (줄바꿈, 특수문자, 공백 등 처리)
     const allArgs = args.map((arg) => this.escapeShellArg(arg));
@@ -417,9 +416,7 @@ export abstract class SpawnCliRunner implements CliRunner {
     logDebug('All Args (escaped):', JSON.stringify(allArgs, null, 2));
 
     return new Promise((resolve) => {
-      const workingDir = normalizeWindowsDriveLetter(
-        vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
-      );
+      const workingDir = normalizeWindowsDriveLetter(cwd || process.cwd());
       
       const childProcess: ChildProcess = spawn(command, allArgs, {
         cwd: workingDir,

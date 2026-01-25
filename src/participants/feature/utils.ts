@@ -5,8 +5,8 @@
 
 import * as vscode from 'vscode';
 import { CliRunner, StreamContent } from '../../cli/types';
-import { resolveFileReferences } from '../../cli/utils';
-import { ModeInstructions } from '../types';
+import { resolveFileReferences } from './promptProcessor';
+import { AgentInstructions } from '../types';
 import { ChatSessionManager } from '../session';
 
 /**
@@ -27,8 +27,8 @@ export interface RunCliOptions {
   stream: vscode.ChatResponseStream;
   /** 취소 토큰 */
   token: vscode.CancellationToken;
-  /** 모드 지침 (선택적) */
-  modeInstructions?: ModeInstructions;
+  /** 에이전트 지침 (선택적) */
+  agentInstructions?: AgentInstructions;
   /** 커맨드 이름 (선택적, 빈 프롬프트 메시지용) */
   commandName?: string;
 }
@@ -63,7 +63,7 @@ function handleStreamContent(
  * @returns 성공 여부
  */
 export async function runCliWithStreaming(options: RunCliOptions): Promise<boolean> {
-  const { cliRunner, name, prompt, references, history, stream, token, modeInstructions, commandName } = options;
+  const { cliRunner, name, prompt, references, history, stream, token, agentInstructions, commandName } = options;
 
   // 프롬프트가 비어있는 경우
   if (!prompt.trim()) {
@@ -76,9 +76,9 @@ export async function runCliWithStreaming(options: RunCliOptions): Promise<boole
   const existingSessionId = ChatSessionManager.findSessionId(history);
 
   // Agent 지침 전달 여부 결정 (동일 Agent면 중복 전달 안함)
-  const currentAgentName = modeInstructions?.name;
+  const currentAgentName = agentInstructions?.name;
   const shouldPassInstructions = ChatSessionManager.shouldPassAgentInstructions(history, currentAgentName);
-  const effectiveModeInstructions = shouldPassInstructions ? modeInstructions : undefined;
+  const effectiveAgentInstructions = shouldPassInstructions ? agentInstructions : undefined;
 
   // AbortController 생성 (취소 토큰 연동)
   const abortController = new AbortController();
@@ -91,9 +91,10 @@ export async function runCliWithStreaming(options: RunCliOptions): Promise<boole
   const result = await cliRunner.run(
     {
       prompt: resolvedPrompt,
-      modeInstructions: effectiveModeInstructions,
+      agentInstructions: effectiveAgentInstructions,
       abortSignal: abortController.signal,
       resumeSessionId: existingSessionId,
+      cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
     },
     (content) => handleStreamContent(stream, content)
   );

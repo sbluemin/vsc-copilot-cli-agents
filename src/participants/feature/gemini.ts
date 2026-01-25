@@ -4,8 +4,8 @@
 
 import * as vscode from 'vscode';
 import { executeCommand, ParseResult, SpawnCliRunner } from '../../cli/spawnCliRunner';
-import { GeminiStreamMessage, HealthGuidance, InstallInfo, StreamContent } from '../../cli/types';
-import { ModeInstructions, ParticipantConfig } from '../types';
+import { GeminiStreamMessage, HealthGuidance, InstallInfo, StreamContent, AgentInstructions } from '../../cli/types';
+import { ParticipantConfig } from '../types';
 
 export class GeminiCliRunner extends SpawnCliRunner {
   readonly name = 'gemini';
@@ -45,20 +45,20 @@ export class GeminiCliRunner extends SpawnCliRunner {
     return [];
   }
 
-  getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[] {
-    const { modeInstructions, prompt } = options;
+  getArgumentPrompt(options: { agentInstructions?: AgentInstructions; prompt?: string }): string[] {
+    const { agentInstructions, prompt } = options;
 
     // Gemini CLI는 --system-prompt 옵션이 없으므로
-    // 모드 지침을 사용자 프롬프트 앞에 추가하여 전달
+    // 에이전트 지침을 사용자 프롬프트 앞에 추가하여 전달
     let finalPrompt = prompt ?? '';
 
-    if (modeInstructions) {
-      // 프롬프팅 기법: 명확한 구분자로 모드 지침과 사용자 요청 구분
+    if (agentInstructions) {
+      // 프롬팅 기법: 명확한 구분자로 에이전트 지침과 사용자 요청 구분
       finalPrompt = [
-        '<ModeInstructions>',
-        modeInstructions.name,
-        modeInstructions.content,
-        '</ModeInstructions>',
+        '<AgentInstructions>',
+        agentInstructions.name,
+        agentInstructions.content,
+        '</AgentInstructions>',
         '',
         prompt ?? ''
       ].join('\n');
@@ -131,7 +131,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
 
   protected buildCliOptions(options?: {
     resumeSessionId?: string;
-    modeInstructions?: ModeInstructions;
+    agentInstructions?: AgentInstructions;
     prompt?: string;
   }): { command: string; args: string[] } {
     const { resumeSessionId } = options ?? {};
@@ -142,7 +142,7 @@ export class GeminiCliRunner extends SpawnCliRunner {
     args.push(...this.getArgumentModel());
     args.push(...this.getArgumentResume(resumeSessionId));
     args.push(...this.getArgumentDirectories());
-    args.push(...this.getArgumentPrompt({ modeInstructions: options?.modeInstructions, prompt: options?.prompt }));
+    args.push(...this.getArgumentPrompt({ agentInstructions: options?.agentInstructions, prompt: options?.prompt }));
 
     return {
       command: 'gemini',

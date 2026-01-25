@@ -2,20 +2,29 @@
  * CLI 관련 타입 정의
  */
 
-import { ModeInstructions } from "../participants/types";
+/**
+ * 에이전트 지침 객체 인터페이스
+ * Custom Agent 모드에서 전달되는 시스템 프롬프트 정보
+ */
+export interface AgentInstructions {
+  name: string;
+  content: string;
+}
 
 /**
  * CLI 실행 옵션
  */
 export interface CliOptions {
-  /** 모드 지침 */
-  modeInstructions?: ModeInstructions;
+  /** 에이전트 지침 */
+  agentInstructions?: AgentInstructions;
   /** 프롬프트 내용 */
   prompt: string;
   /** 취소 토큰 */
   abortSignal?: AbortSignal;
   /** 재개할 CLI 세션 ID (resume 용도) */
   resumeSessionId?: string;
+  /** 작업 디렉토리 (미지정 시 process.cwd() 사용) */
+  cwd?: string;
 }
 
 /**
@@ -247,7 +256,7 @@ export interface CliRunner {
 
   getArgumentDirectories(): string[];
 
-  getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[];
+  getArgumentPrompt(options: { agentInstructions?: AgentInstructions; prompt?: string }): string[];
 
   checkInstallation(): Promise<InstallInfo>;
 

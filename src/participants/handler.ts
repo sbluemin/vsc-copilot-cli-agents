@@ -23,9 +23,9 @@ export function createParticipantHandler(
   ): Promise<void> => {
     const { cliRunner, name } = config;
 
-    // Custom Agent 모드 지침 추출 (모든 CLI에서 자동 처리)
+    // Custom Agent 에이전트 지침 추출 (모든 CLI에서 자동 처리)
     // 중복 전달 방지는 runCliWithStreaming 내부에서 히스토리 기반으로 처리됨
-    const modeInstructions = (request as ExtendedChatRequest).modeInstructions2;
+    const agentInstructions = (request as ExtendedChatRequest).modeInstructions2;
 
     // 커맨드 처리: 등록된 커맨드 찾기 및 실행
     if (request.command) {
@@ -37,7 +37,7 @@ export function createParticipantHandler(
           stream, 
           token, 
           config, 
-          modeInstructions,
+          agentInstructions,
           prompt: request.prompt || undefined
         };
         const handled = await command.handler(ctx);
@@ -56,7 +56,7 @@ export function createParticipantHandler(
       history: context.history,
       stream,
       token,
-      modeInstructions,
+      agentInstructions,
     });
   };
 }

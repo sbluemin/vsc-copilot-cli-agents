@@ -4,9 +4,9 @@
 
 import * as vscode from 'vscode';
 import { SpawnCliRunner, ParseResult } from '../../cli/spawnCliRunner';
-import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance } from '../../cli/types';
+import { ClaudeStreamMessage, StreamContent, InstallInfo, HealthGuidance, AgentInstructions } from '../../cli/types';
 import { executeCommand } from '../../cli/spawnCliRunner';
-import { ModeInstructions, ParticipantConfig } from '../types';
+import { ParticipantConfig } from '../types';
 
 export class ClaudeCliRunner extends SpawnCliRunner {
   readonly name = 'claude';
@@ -44,20 +44,20 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     return args;
   }
 
-  getArgumentPrompt(options: { modeInstructions?: ModeInstructions; prompt?: string }): string[] {
-    const { modeInstructions, prompt } = options;
+  getArgumentPrompt(options: { agentInstructions?: AgentInstructions; prompt?: string }): string[] {
+    const { agentInstructions, prompt } = options;
     const args = [];
 
-    // modeInstructions가 있으면 JSON 형태로 agents 설정 추가
-    if (modeInstructions) {
+    // agentInstructions가 있으면 JSON 형태로 agents 설정 추가
+    if (agentInstructions) {
       const agentsConfig = JSON.stringify({
-        [modeInstructions.name]: {
-          description: `${modeInstructions.name} agent`,
-          prompt: modeInstructions.content
+        [agentInstructions.name]: {
+          description: `${agentInstructions.name} agent`,
+          prompt: agentInstructions.content
         }
       });
 
-      args.push('--agent', `'${modeInstructions.name}'`, '--agents', `'${agentsConfig}'`);
+      args.push('--agent', `'${agentInstructions.name}'`, '--agents', `'${agentsConfig}'`);
     }
 
     // claude는 -p <prompt> 형태로 전달
@@ -131,7 +131,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
 
   protected buildCliOptions(options?: {
     resumeSessionId?: string;
-    modeInstructions?: ModeInstructions;
+    agentInstructions?: AgentInstructions;
     prompt?: string;
   }): { command: string; args: string[] } {
     const { resumeSessionId } = options ?? {};
@@ -142,7 +142,7 @@ export class ClaudeCliRunner extends SpawnCliRunner {
     args.push(...this.getArgumentModel());
     args.push(...this.getArgumentResume(resumeSessionId));
     args.push(...this.getArgumentDirectories());
-    args.push(...this.getArgumentPrompt({ modeInstructions: options?.modeInstructions, prompt: options?.prompt }));
+    args.push(...this.getArgumentPrompt({ agentInstructions: options?.agentInstructions, prompt: options?.prompt }));
 
     return {
       command: 'claude',
