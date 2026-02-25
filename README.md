@@ -1,3 +1,9 @@
+> [!CAUTION]
+> **This project is no longer actively maintained (Archived)**
+>
+> This extension was created before GitHub Copilot supported Agent Skills and Agents HQ.
+> Since all features are now available without this extension, this repository has been transitioned to maintenance mode.
+
 <div align="center">
     <img src="./assets/icon.png" alt="CLI Agents Logo" width="200" height="200"/>
     <h1>GitHub Copilot CLI Agents</h1>
